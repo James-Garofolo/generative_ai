@@ -32,13 +32,13 @@ max = tf.keras.layers.MaxPooling2D(2)(x)
 avg = tf.keras.layers.AvgPool2D(2)(x)
 block_2_output = tf.keras.layers.Concatenate()([max, avg])
 
-"""x = tf.keras.layers.Conv2D(128, 3, activation="relu", padding="same")(block_2_output)
+x = tf.keras.layers.Conv2D(128, 3, activation="relu", padding="same")(block_2_output)
 x = tf.keras.layers.add([x, block_2_output])
 max = tf.keras.layers.MaxPooling2D(2)(x)
 avg = tf.keras.layers.AvgPool2D(2)(x)
-block_3_output = tf.keras.layers.Concatenate()([max, avg])"""
+block_3_output = tf.keras.layers.Concatenate()([max, avg])
 
-x = tf.keras.layers.Flatten()(block_2_output)
+x = tf.keras.layers.Flatten()(block_3_output)
 
 x = tf.keras.layers.Dropout(0.5)(x)
 x = tf.keras.layers.Dense(256, activation="relu")(x)
@@ -58,9 +58,14 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learn_rate), loss
 
 print(model.layers[1].get_weights()[0].shape)
 
-history = model.fit(xtrain, ytrain, 64, 30, validation_data=(xval, yval))
+history = model.fit(xtrain, ytrain, 64, 50, validation_data=(xval, yval))
 
 model.evaluate(xtest, ytest)
+
+kernel_max = tf.reduce_max(tf.abs(model.layers[1].get_weights()[0]), axis=None)
+kernels = []
+for a in range(6):
+    kernels.append(model.layers[1].get_weights()[0][:,:,:,a]/kernel_max)
 
 plt.figure(1)
 plt.plot(history.history['accuracy'])
@@ -93,7 +98,7 @@ plt.subplot(3,2,5)
 plt.imshow(model.layers[1].get_weights()[0][:,:,:,4], cmap='gray')
 plt.xlabel("kernel 4")
 plt.subplot(3,2,6)
-plt.imshow(model.layers[1].get_weights()[0][:,:,:,5], cmap='gray')
+plt.imshow(model.layers[1].get_weights()[0][:,:,:,5], cmap='gray', vmin=-1.0, vmax=1.0)
 plt.xlabel("kernel 5")
 plt.subplots_adjust(hspace=1.0, wspace=0.5)
 plt.show()
