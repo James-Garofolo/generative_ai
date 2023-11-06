@@ -22,6 +22,7 @@ plt.ion()
 
 # if GPU is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device: ", device)
 
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
