@@ -1,0 +1,42 @@
+{
+    "os": "Windows-10-10.0.22621-SP0",
+    "python": "3.9.13",
+    "heartbeatAt": "2023-11-06T22:43:40.769994",
+    "startedAt": "2023-11-06T22:43:40.206380",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "c:\\Users\\JimG9\\Desktop\\GitHub Projects\\generative_ai\\project_experiments\\vision_cart_pole.py",
+    "codePath": "project_experiments\\vision_cart_pole.py",
+    "git": {
+        "remote": "https://github.com/James-Garofolo/generative_ai.git",
+        "commit": "42da8ec7970374736c0b7235573a38754167f4a1"
+    },
+    "email": "garofo24@students.rowan.edu",
+    "root": "C:/Users/JimG9/Desktop/GitHub Projects/generative_ai",
+    "host": "DESKTOP-HNCP3G8",
+    "username": "JimG9",
+    "executable": "C:\\Users\\JimG9\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\\python.exe",
+    "cpu_count": 4,
+    "cpu_count_logical": 8,
+    "cpu_freq": {
+        "current": 2001.0,
+        "min": 0.0,
+        "max": 2001.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2001.0,
+            "min": 0.0,
+            "max": 2001.0
+        }
+    ],
+    "disk": {
+        "total": 212.22753524780273,
+        "used": 199.8180160522461
+    },
+    "memory": {
+        "total": 7.820201873779297
+    }
+}

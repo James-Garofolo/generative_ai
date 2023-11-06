@@ -1,0 +1,30 @@
+rgb_array
+Screen height:  60  | Width:  135
+C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\torchvision\transforms\transforms.py:329: UserWarning: Argument 'interpolation' of type int is deprecated since 0.13 and will be removed in 0.15. Please use InterpolationMode enum.
+  warnings.warn(
+C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\gym\envs\registration.py:555: UserWarning: [33mWARN: The environment CartPole-v0 is out of date. You should consider upgrading to version `v1`.
+  logger.warn(
+
+
+
+
+
+
+
+
+
+  0%|                                                                                                                                     | 18/50000 [00:25<19:32:42,  1.41s/it]
+Traceback (most recent call last):
+  File "c:\Users\JimG9\Desktop\GitHub Projects\generative_ai\project_experiments\vision_cart_pole.py", line 340, in <module>
+    screens.append(get_screen())
+  File "c:\Users\JimG9\Desktop\GitHub Projects\generative_ai\project_experiments\vision_cart_pole.py", line 167, in get_screen
+    return resize(screen).unsqueeze(0).to(device)
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\torchvision\transforms\transforms.py", line 95, in __call__
+    img = t(img)
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\torchvision\transforms\transforms.py", line 227, in __call__
+    return F.to_pil_image(pic, self.mode)
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\torchvision\transforms\functional.py", line 334, in to_pil_image
+    return Image.fromarray(npimg, mode=mode)
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\PIL\Image.py", line 2852, in fromarray
+    obj = obj.tobytes()
+KeyboardInterrupt

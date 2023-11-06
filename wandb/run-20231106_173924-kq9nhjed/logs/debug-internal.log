@@ -1,0 +1,179 @@
+2023-11-06 17:39:24,879 INFO    StreamThr :6308 [internal.py:wandb_internal():86] W&B internal server running at pid: 6308, started at: 2023-11-06 17:39:24.877123
+2023-11-06 17:39:24,885 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: status
+2023-11-06 17:39:24,894 INFO    WriterThread:6308 [datastore.py:open_for_write():85] open: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\run-kq9nhjed.wandb
+2023-11-06 17:39:24,896 DEBUG   SenderThread:6308 [sender.py:send():379] send: header
+2023-11-06 17:39:24,955 DEBUG   SenderThread:6308 [sender.py:send():379] send: run
+2023-11-06 17:39:25,341 INFO    SenderThread:6308 [dir_watcher.py:__init__():211] watching files in: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files
+2023-11-06 17:39:25,341 INFO    SenderThread:6308 [sender.py:_start_run_threads():1121] run started: kq9nhjed with start time 1699310364.880114
+2023-11-06 17:39:25,341 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: summary_record
+2023-11-06 17:39:25,342 INFO    SenderThread:6308 [sender.py:_save_file():1375] saving file wandb-summary.json with policy end
+2023-11-06 17:39:25,353 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: check_version
+2023-11-06 17:39:25,354 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: check_version
+2023-11-06 17:39:25,493 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: run_start
+2023-11-06 17:39:25,512 DEBUG   HandlerThread:6308 [system_info.py:__init__():31] System info init
+2023-11-06 17:39:25,512 DEBUG   HandlerThread:6308 [system_info.py:__init__():46] System info init done
+2023-11-06 17:39:25,512 INFO    HandlerThread:6308 [system_monitor.py:start():181] Starting system monitor
+2023-11-06 17:39:25,513 INFO    SystemMonitor:6308 [system_monitor.py:_start():145] Starting system asset monitoring threads
+2023-11-06 17:39:25,513 INFO    HandlerThread:6308 [system_monitor.py:probe():201] Collecting system info
+2023-11-06 17:39:25,517 INFO    SystemMonitor:6308 [interfaces.py:start():190] Started cpu monitoring
+2023-11-06 17:39:25,521 DEBUG   HandlerThread:6308 [system_info.py:probe():195] Probing system
+2023-11-06 17:39:25,522 INFO    SystemMonitor:6308 [interfaces.py:start():190] Started disk monitoring
+2023-11-06 17:39:25,529 INFO    SystemMonitor:6308 [interfaces.py:start():190] Started memory monitoring
+2023-11-06 17:39:25,543 INFO    SystemMonitor:6308 [interfaces.py:start():190] Started network monitoring
+2023-11-06 17:39:25,544 DEBUG   HandlerThread:6308 [system_info.py:_probe_git():180] Probing git
+2023-11-06 17:39:25,638 DEBUG   HandlerThread:6308 [system_info.py:_probe_git():188] Probing git done
+2023-11-06 17:39:25,638 DEBUG   HandlerThread:6308 [system_info.py:probe():240] Probing system done
+2023-11-06 17:39:25,638 DEBUG   HandlerThread:6308 [system_monitor.py:probe():210] {'os': 'Windows-10-10.0.22621-SP0', 'python': '3.9.13', 'heartbeatAt': '2023-11-06T22:39:25.521631', 'startedAt': '2023-11-06T22:39:24.834546', 'docker': None, 'cuda': None, 'args': (), 'state': 'running', 'program': 'c:\\Users\\JimG9\\Desktop\\GitHub Projects\\generative_ai\\project_experiments\\vision_cart_pole.py', 'codePath': 'project_experiments\\vision_cart_pole.py', 'git': {'remote': 'https://github.com/James-Garofolo/generative_ai.git', 'commit': '42da8ec7970374736c0b7235573a38754167f4a1'}, 'email': 'garofo24@students.rowan.edu', 'root': 'C:/Users/JimG9/Desktop/GitHub Projects/generative_ai', 'host': 'DESKTOP-HNCP3G8', 'username': 'JimG9', 'executable': 'C:\\Users\\JimG9\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\\python.exe', 'cpu_count': 4, 'cpu_count_logical': 8, 'cpu_freq': {'current': 2001.0, 'min': 0.0, 'max': 2001.0}, 'cpu_freq_per_core': [{'current': 2001.0, 'min': 0.0, 'max': 2001.0}], 'disk': {'total': 212.22753524780273, 'used': 199.8296890258789}, 'memory': {'total': 7.820201873779297}}
+2023-11-06 17:39:25,638 INFO    HandlerThread:6308 [system_monitor.py:probe():211] Finished collecting system info
+2023-11-06 17:39:25,638 INFO    HandlerThread:6308 [system_monitor.py:probe():214] Publishing system info
+2023-11-06 17:39:25,639 DEBUG   HandlerThread:6308 [system_info.py:_save_pip():51] Saving list of pip packages installed into the current environment
+2023-11-06 17:39:25,640 DEBUG   HandlerThread:6308 [system_info.py:_save_pip():67] Saving pip packages done
+2023-11-06 17:39:25,641 INFO    HandlerThread:6308 [system_monitor.py:probe():216] Finished publishing system info
+2023-11-06 17:39:25,659 DEBUG   SenderThread:6308 [sender.py:send():379] send: files
+2023-11-06 17:39:25,659 INFO    SenderThread:6308 [sender.py:_save_file():1375] saving file wandb-metadata.json with policy now
+2023-11-06 17:39:25,677 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: stop_status
+2023-11-06 17:39:25,677 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: stop_status
+2023-11-06 17:39:25,948 DEBUG   SenderThread:6308 [sender.py:send():379] send: telemetry
+2023-11-06 17:39:26,064 DEBUG   SenderThread:6308 [sender.py:send():379] send: exit
+2023-11-06 17:39:26,065 INFO    SenderThread:6308 [sender.py:send_exit():584] handling exit code: 1
+2023-11-06 17:39:26,065 INFO    SenderThread:6308 [sender.py:send_exit():586] handling runtime: 0
+2023-11-06 17:39:26,068 INFO    SenderThread:6308 [sender.py:_save_file():1375] saving file wandb-summary.json with policy end
+2023-11-06 17:39:26,069 INFO    SenderThread:6308 [sender.py:send_exit():592] send defer
+2023-11-06 17:39:26,069 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:26,069 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 0
+2023-11-06 17:39:26,070 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:26,070 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 0
+2023-11-06 17:39:26,070 INFO    SenderThread:6308 [sender.py:transition_state():612] send defer: 1
+2023-11-06 17:39:26,071 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:26,071 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 1
+2023-11-06 17:39:26,071 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:26,071 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 1
+2023-11-06 17:39:26,071 INFO    SenderThread:6308 [sender.py:transition_state():612] send defer: 2
+2023-11-06 17:39:26,072 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:26,072 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 2
+2023-11-06 17:39:26,072 INFO    HandlerThread:6308 [system_monitor.py:finish():190] Stopping system monitor
+2023-11-06 17:39:26,072 INFO    HandlerThread:6308 [interfaces.py:finish():202] Joined cpu monitor
+2023-11-06 17:39:26,072 DEBUG   SystemMonitor:6308 [system_monitor.py:_start():159] Starting system metrics aggregation loop
+2023-11-06 17:39:26,073 INFO    HandlerThread:6308 [interfaces.py:finish():202] Joined disk monitor
+2023-11-06 17:39:26,073 DEBUG   SystemMonitor:6308 [system_monitor.py:_start():166] Finished system metrics aggregation loop
+2023-11-06 17:39:26,073 INFO    HandlerThread:6308 [interfaces.py:finish():202] Joined memory monitor
+2023-11-06 17:39:26,074 DEBUG   SystemMonitor:6308 [system_monitor.py:_start():170] Publishing last batch of metrics
+2023-11-06 17:39:26,074 INFO    HandlerThread:6308 [interfaces.py:finish():202] Joined network monitor
+2023-11-06 17:39:26,076 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:26,077 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 2
+2023-11-06 17:39:26,077 INFO    SenderThread:6308 [sender.py:transition_state():612] send defer: 3
+2023-11-06 17:39:26,078 DEBUG   SenderThread:6308 [sender.py:send():379] send: stats
+2023-11-06 17:39:26,078 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:26,079 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 3
+2023-11-06 17:39:26,080 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:26,080 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 3
+2023-11-06 17:39:26,080 INFO    SenderThread:6308 [sender.py:transition_state():612] send defer: 4
+2023-11-06 17:39:26,080 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:26,080 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 4
+2023-11-06 17:39:26,081 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:26,081 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 4
+2023-11-06 17:39:26,082 INFO    SenderThread:6308 [sender.py:transition_state():612] send defer: 5
+2023-11-06 17:39:26,082 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:26,082 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 5
+2023-11-06 17:39:26,084 DEBUG   SenderThread:6308 [sender.py:send():379] send: summary
+2023-11-06 17:39:26,087 INFO    SenderThread:6308 [sender.py:_save_file():1375] saving file wandb-summary.json with policy end
+2023-11-06 17:39:26,088 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:26,088 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 5
+2023-11-06 17:39:26,088 INFO    SenderThread:6308 [sender.py:transition_state():612] send defer: 6
+2023-11-06 17:39:26,089 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:26,089 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 6
+2023-11-06 17:39:26,090 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:26,090 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 6
+2023-11-06 17:39:26,095 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: status_report
+2023-11-06 17:39:26,149 INFO    wandb-upload_0:6308 [upload_job.py:push():131] Uploaded file C:\Users\JimG9\AppData\Local\Temp\tmpel6pk1jdwandb\wvqbiykz-wandb-metadata.json
+2023-11-06 17:39:26,347 INFO    Thread-16 :6308 [dir_watcher.py:_on_file_created():271] file/dir created: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\output.log
+2023-11-06 17:39:26,347 INFO    Thread-16 :6308 [dir_watcher.py:_on_file_created():271] file/dir created: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\requirements.txt
+2023-11-06 17:39:26,348 INFO    Thread-16 :6308 [dir_watcher.py:_on_file_created():271] file/dir created: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\wandb-metadata.json
+2023-11-06 17:39:26,348 INFO    Thread-16 :6308 [dir_watcher.py:_on_file_created():271] file/dir created: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\wandb-summary.json
+2023-11-06 17:39:26,365 INFO    SenderThread:6308 [sender.py:transition_state():612] send defer: 7
+2023-11-06 17:39:26,367 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:26,369 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 7
+2023-11-06 17:39:26,369 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:26,370 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 7
+2023-11-06 17:39:27,096 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: poll_exit
+2023-11-06 17:39:27,361 INFO    Thread-16 :6308 [dir_watcher.py:_on_file_modified():288] file/dir modified: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\config.yaml
+2023-11-06 17:39:27,979 INFO    SenderThread:6308 [sender.py:transition_state():612] send defer: 8
+2023-11-06 17:39:27,979 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: poll_exit
+2023-11-06 17:39:27,979 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:27,980 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 8
+2023-11-06 17:39:27,980 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:27,980 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 8
+2023-11-06 17:39:27,980 INFO    SenderThread:6308 [job_builder.py:build():281] Attempting to build job artifact
+2023-11-06 17:39:27,981 INFO    SenderThread:6308 [job_builder.py:_get_source_type():400] is repo sourced job
+2023-11-06 17:39:28,008 INFO    SenderThread:6308 [job_builder.py:build():374] adding wandb-job metadata file
+2023-11-06 17:39:28,045 INFO    SenderThread:6308 [sender.py:transition_state():612] send defer: 9
+2023-11-06 17:39:28,046 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:28,046 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 9
+2023-11-06 17:39:28,048 DEBUG   SenderThread:6308 [sender.py:send():379] send: artifact
+2023-11-06 17:39:28,110 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: poll_exit
+2023-11-06 17:39:28,375 INFO    Thread-16 :6308 [dir_watcher.py:_on_file_modified():288] file/dir modified: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\output.log
+2023-11-06 17:39:28,821 INFO    wandb-upload_1:6308 [upload_job.py:push():86] Skipped uploading C:\Users\JimG9\AppData\Local\wandb\wandb\artifacts\staging\tmpe19s6sos
+2023-11-06 17:39:29,092 INFO    wandb-upload_0:6308 [upload_job.py:push():89] Uploaded file C:\Users\JimG9\AppData\Local\wandb\wandb\artifacts\staging\tmpsc281y05
+2023-11-06 17:39:30,147 INFO    SenderThread:6308 [sender.py:send_artifact():1475] sent artifact job-https___github.com_James-Garofolo_generative_ai.git_project_experiments_vision_cart_pole.py - {'id': 'QXJ0aWZhY3Q6NjMwMTY3ODQ3', 'digest': '77554297a217e32a457d43eae3c635d1', 'state': 'PENDING', 'aliases': [], 'artifactSequence': {'id': 'QXJ0aWZhY3RDb2xsZWN0aW9uOjExMzIwNjE0OA==', 'latestArtifact': {'id': 'QXJ0aWZhY3Q6NjMwMTI5NDIy', 'versionIndex': 0}}, 'version': 'latest'}
+2023-11-06 17:39:30,147 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:30,147 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 9
+2023-11-06 17:39:30,147 INFO    SenderThread:6308 [dir_watcher.py:finish():358] shutting down directory watcher
+2023-11-06 17:39:30,403 INFO    SenderThread:6308 [dir_watcher.py:finish():388] scan: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files
+2023-11-06 17:39:30,403 INFO    SenderThread:6308 [dir_watcher.py:finish():402] scan save: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\config.yaml config.yaml
+2023-11-06 17:39:30,404 INFO    SenderThread:6308 [dir_watcher.py:finish():402] scan save: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\output.log output.log
+2023-11-06 17:39:30,409 INFO    SenderThread:6308 [dir_watcher.py:finish():402] scan save: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\requirements.txt requirements.txt
+2023-11-06 17:39:30,415 INFO    SenderThread:6308 [dir_watcher.py:finish():402] scan save: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\wandb-metadata.json wandb-metadata.json
+2023-11-06 17:39:30,416 INFO    SenderThread:6308 [dir_watcher.py:finish():402] scan save: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\wandb-summary.json wandb-summary.json
+2023-11-06 17:39:30,422 INFO    SenderThread:6308 [sender.py:transition_state():612] send defer: 10
+2023-11-06 17:39:30,422 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: poll_exit
+2023-11-06 17:39:30,423 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:30,423 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 10
+2023-11-06 17:39:30,424 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:30,424 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 10
+2023-11-06 17:39:30,425 INFO    SenderThread:6308 [file_pusher.py:finish():159] shutting down file pusher
+2023-11-06 17:39:30,655 INFO    wandb-upload_0:6308 [upload_job.py:push():131] Uploaded file C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\output.log
+2023-11-06 17:39:30,804 INFO    wandb-upload_1:6308 [upload_job.py:push():131] Uploaded file C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\config.yaml
+2023-11-06 17:39:30,839 INFO    wandb-upload_3:6308 [upload_job.py:push():131] Uploaded file C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\wandb-summary.json
+2023-11-06 17:39:30,858 INFO    wandb-upload_2:6308 [upload_job.py:push():131] Uploaded file C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\files\requirements.txt
+2023-11-06 17:39:31,065 INFO    Thread-15 :6308 [sender.py:transition_state():612] send defer: 11
+2023-11-06 17:39:31,065 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:31,066 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 11
+2023-11-06 17:39:31,066 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:31,066 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 11
+2023-11-06 17:39:31,066 INFO    SenderThread:6308 [file_pusher.py:join():164] waiting for file pusher
+2023-11-06 17:39:31,067 INFO    SenderThread:6308 [sender.py:transition_state():612] send defer: 12
+2023-11-06 17:39:31,067 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:31,067 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 12
+2023-11-06 17:39:31,067 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:31,068 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 12
+2023-11-06 17:39:31,068 INFO    SenderThread:6308 [file_stream.py:finish():593] file stream finish called
+2023-11-06 17:39:31,183 INFO    SenderThread:6308 [file_stream.py:finish():597] file stream finish is done
+2023-11-06 17:39:31,184 INFO    SenderThread:6308 [sender.py:transition_state():612] send defer: 13
+2023-11-06 17:39:31,184 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:31,184 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 13
+2023-11-06 17:39:31,184 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:31,184 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 13
+2023-11-06 17:39:31,184 INFO    SenderThread:6308 [sender.py:transition_state():612] send defer: 14
+2023-11-06 17:39:31,185 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: defer
+2023-11-06 17:39:31,185 DEBUG   SenderThread:6308 [sender.py:send():379] send: final
+2023-11-06 17:39:31,185 INFO    HandlerThread:6308 [handler.py:handle_request_defer():170] handle defer: 14
+2023-11-06 17:39:31,185 DEBUG   SenderThread:6308 [sender.py:send():379] send: footer
+2023-11-06 17:39:31,186 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: defer
+2023-11-06 17:39:31,186 INFO    SenderThread:6308 [sender.py:send_request_defer():608] handle sender defer: 14
+2023-11-06 17:39:31,187 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: poll_exit
+2023-11-06 17:39:31,187 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: server_info
+2023-11-06 17:39:31,187 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: get_summary
+2023-11-06 17:39:31,187 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: sampled_history
+2023-11-06 17:39:31,187 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: job_info
+2023-11-06 17:39:31,188 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: poll_exit
+2023-11-06 17:39:31,188 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: server_info
+2023-11-06 17:39:31,243 DEBUG   SenderThread:6308 [sender.py:send_request():406] send_request: job_info
+2023-11-06 17:39:31,243 INFO    MainThread:6308 [wandb_run.py:_footer_history_summary_info():3481] rendering history
+2023-11-06 17:39:31,243 INFO    MainThread:6308 [wandb_run.py:_footer_history_summary_info():3513] rendering summary
+2023-11-06 17:39:31,243 INFO    MainThread:6308 [wandb_run.py:_footer_sync_info():3440] logging synced files
+2023-11-06 17:39:31,248 DEBUG   HandlerThread:6308 [handler.py:handle_request():144] handle_request: shutdown
+2023-11-06 17:39:31,249 INFO    HandlerThread:6308 [handler.py:finish():861] shutting down handler
+2023-11-06 17:39:32,192 INFO    WriterThread:6308 [datastore.py:close():294] close: C:\Users\JimG9\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_173924-kq9nhjed\run-kq9nhjed.wandb
+2023-11-06 17:39:32,256 INFO    SenderThread:6308 [sender.py:finish():1552] shutting down sender
+2023-11-06 17:39:32,256 INFO    SenderThread:6308 [file_pusher.py:finish():159] shutting down file pusher
+2023-11-06 17:39:32,257 INFO    SenderThread:6308 [file_pusher.py:join():164] waiting for file pusher

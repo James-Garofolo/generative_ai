@@ -1,0 +1,11 @@
+rgb_array
+Screen height:  60  | Width:  135
+(array([ 0.02897525,  0.2104924 , -0.00974414, -0.31660736], dtype=float32), 1.0, False, False, {})
+C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\torchvision\transforms\transforms.py:329: UserWarning: Argument 'interpolation' of type int is deprecated since 0.13 and will be removed in 0.15. Please use InterpolationMode enum.
+  warnings.warn(
+C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\gym\envs\registration.py:555: UserWarning: [33mWARN: The environment CartPole-v0 is out of date. You should consider upgrading to version `v1`.
+  logger.warn(
+Traceback (most recent call last):
+  File "c:\Users\JimG9\Desktop\GitHub Projects\generative_ai\project_experiments\vision_cart_pole.py", line 338, in <module>
+    state_variables, _, done, _ = env_stuff_tuple
+ValueError: too many values to unpack (expected 4)

@@ -75,9 +75,11 @@ LR = 1e-4
 
 # Get number of actions from gym action space
 n_actions = env.action_space.n
+
 # Get the number of state observations
 state, info = env.reset()
 n_observations = len(state)
+print(n_observations, state)
 
 policy_net = DQN(n_observations, n_actions).to(device)
 target_net = DQN(n_observations, n_actions).to(device)

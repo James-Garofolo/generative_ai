@@ -1,0 +1,194 @@
+C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\torchvision\transforms\transforms.py:329: UserWarning: Argument 'interpolation' of type int is deprecated since 0.13 and will be removed in 0.15. Please use InterpolationMode enum.
+  warnings.warn(
+C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\gym\envs\registration.py:555: UserWarning: [33mWARN: The environment CartPole-v0 is out of date. You should consider upgrading to version `v1`.
+  logger.warn(
+rgb_array
+Screen height:  60  | Width:  135
+(array([-0.01887189, -0.17970295,  0.03471764,  0.3248724 ], dtype=float32), 1.0, False, False, {})
+(array([-0.02246595,  0.01490792,  0.04121509,  0.04333694], dtype=float32), 1.0, False, False, {})
+(array([-0.02216779, -0.18078007,  0.04208183,  0.34873345], dtype=float32), 1.0, False, False, {})
+(array([-0.02578339,  0.01371889,  0.0490565 ,  0.06961171], dtype=float32), 1.0, False, False, {})
+(array([-0.02550901, -0.18207079,  0.05044873,  0.37735975], dtype=float32), 1.0, False, False, {})
+(array([-0.02915043,  0.01229971,  0.05799593,  0.10100056], dtype=float32), 1.0, False, False, {})
+(array([-0.02890443,  0.20654461,  0.06001594, -0.17283565], dtype=float32), 1.0, False, False, {})
+(array([-0.02477354,  0.40075853,  0.05655922, -0.44599795], dtype=float32), 1.0, False, False, {})
+(array([-0.01675837,  0.5950366 ,  0.04763927, -0.7203295 ], dtype=float32), 1.0, False, False, {})
+(array([-0.00485764,  0.7894682 ,  0.03323267, -0.99764544], dtype=float32), 1.0, False, False, {})
+(array([ 0.01093173,  0.98413044,  0.01327977, -1.279709  ], dtype=float32), 1.0, False, False, {})
+(array([ 0.03061434,  1.1790807 , -0.01231441, -1.5682044 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.05419595,  0.9841079 , -0.0436785 , -1.2793877 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.07387811,  0.789569  , -0.06926625, -1.0006951 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.08966949,  0.5954377 , -0.08928016, -0.7305444 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.10157824,  0.7916727 , -0.10389104, -1.049938  ], dtype=float32), 1.0, False, False, {})
+(array([ 0.1174117 ,  0.98800784, -0.12488981, -1.3733419 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.13717185,  1.1844501 , -0.15235664, -1.7023325 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.16086085,  1.3809631 , -0.18640329, -2.0383072 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.18848012,  1.1881863 , -0.22716944, -1.8086369 ], dtype=float32), 1.0, True, False, {})
+(array([-0.02638958, -0.15830135,  0.02672271,  0.26848403], dtype=float32), 1.0, False, False, {})
+(array([-0.0295556 ,  0.03642924,  0.03209239, -0.01565205], dtype=float32), 1.0, False, False, {})
+(array([-0.02882702,  0.2310766 ,  0.03177935, -0.2980392 ], dtype=float32), 1.0, False, False, {})
+(array([-0.02420549,  0.42573148,  0.02581857, -0.58053255], dtype=float32), 1.0, False, False, {})
+(array([-0.01569086,  0.23025744,  0.01420792, -0.27982938], dtype=float32), 1.0, False, False, {})
+(array([-0.01108571,  0.03493571,  0.00861133,  0.01730062], dtype=float32), 1.0, False, False, {})
+(array([-0.01038699,  0.22993311,  0.00895734, -0.27265292], dtype=float32), 1.0, False, False, {})
+(array([-0.00578833,  0.03468451,  0.00350428,  0.02284165], dtype=float32), 1.0, False, False, {})
+(array([-0.00509464, -0.16048752,  0.00396112,  0.31662816], dtype=float32), 1.0, False, False, {})
+(array([-0.00830439,  0.03457778,  0.01029368,  0.02519706], dtype=float32), 1.0, False, False, {})
+(array([-0.00761284,  0.22955061,  0.01079762, -0.26422042], dtype=float32), 1.0, False, False, {})
+(array([-0.00302182,  0.4245168 ,  0.00551321, -0.5534782 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.00546851,  0.22931786, -0.00555635, -0.25906336], dtype=float32), 1.0, False, False, {})
+(array([ 0.01005487,  0.03427567, -0.01073762,  0.03186185], dtype=float32), 1.0, False, False, {})
+(array([ 0.01074038,  0.22954994, -0.01010038, -0.26418948], dtype=float32), 1.0, False, False, {})
+(array([ 0.01533138,  0.42481458, -0.01538417, -0.56004095], dtype=float32), 1.0, False, False, {})
+(array([ 0.02382767,  0.6201491 , -0.02658499, -0.8575308 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.03623065,  0.8156229 , -0.04373561, -1.158453  ], dtype=float32), 1.0, False, False, {})
+(array([ 0.05254311,  0.6210974 , -0.06690466, -0.8797979 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.06496506,  0.81706136, -0.08450063, -1.1927416 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.08130629,  1.0131701 , -0.10835546, -1.5106686 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.10156969,  0.81951493, -0.13856883, -1.2536837 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.11795998,  1.0161126 , -0.1636425 , -1.5863625 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.13828224,  1.2127578 , -0.19536975, -1.9252862 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.1625374 ,  1.4093667 , -0.23387548, -2.2716632 ], dtype=float32), 1.0, True, False, {})
+(array([-0.01305261,  0.22540918,  0.00096011, -0.26957798], dtype=float32), 1.0, False, False, {})
+(array([-0.00854443,  0.4205174 , -0.00443145, -0.5619579 ], dtype=float32), 1.0, False, False, {})
+(array([-1.3407849e-04,  6.1570126e-01, -1.5670611e-02, -8.5603368e-01],
+      dtype=float32), 1.0, False, False, {})
+(array([ 0.01217995,  0.8110332 , -0.03279128, -1.1536026 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.02840061,  0.6163539 , -0.05586334, -0.87137955], dtype=float32), 1.0, False, False, {})
+(array([ 0.04072769,  0.42203444, -0.07329093, -0.59677035], dtype=float32), 1.0, False, False, {})
+(array([ 0.04916838,  0.61810136, -0.08522633, -0.9116094 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.06153041,  0.8142667 , -0.10345852, -1.2298156 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.07781574,  0.6206166 , -0.12805483, -0.9712563 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.09022807,  0.8172029 , -0.14747997, -1.3012667 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.10657213,  1.0138559 , -0.17350529, -1.6362462 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.12684925,  1.2105368 , -0.20623022, -1.9775928 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.15105999,  1.4071487 , -0.24578208, -2.3264642 ], dtype=float32), 1.0, True, False, {})
+(array([-0.04576829,  0.18122011, -0.03510955, -0.2595526 ], dtype=float32), 1.0, False, False, {})
+(array([-0.04214389, -0.01338349, -0.04030061,  0.02185284], dtype=float32), 1.0, False, False, {})
+(array([-0.04241155, -0.20790501, -0.03986355,  0.30155304], dtype=float32), 1.0, False, False, {})
+(array([-0.04656966, -0.01223824, -0.03383249, -0.00343073], dtype=float32), 1.0, False, False, {})
+(array([-0.04681442, -0.20685907, -0.0339011 ,  0.2783886 ], dtype=float32), 1.0, False, False, {})
+(array([-0.0509516 , -0.0112703 , -0.02833333, -0.02479101], dtype=float32), 1.0, False, False, {})
+(array([-0.05117701, -0.20597471, -0.02882915,  0.2588195 ], dtype=float32), 1.0, False, False, {})
+(array([-0.0552965 , -0.0104533 , -0.02365276, -0.04281533], dtype=float32), 1.0, False, False, {})
+(array([-0.05550557, -0.20522824, -0.02450907,  0.24231209], dtype=float32), 1.0, False, False, {})
+(array([-0.05961013, -0.3999917 , -0.01966283,  0.5271646 ], dtype=float32), 1.0, False, False, {})
+(array([-0.06760997, -0.20459867, -0.00911954,  0.22835119], dtype=float32), 1.0, False, False, {})
+(array([-0.07170194, -0.00934758, -0.00455251, -0.06719435], dtype=float32), 1.0, False, False, {})
+(array([-0.07188889, -0.20440397, -0.0058964 ,  0.22404876], dtype=float32), 1.0, False, False, {})
+(array([-0.07597697, -0.00919824, -0.00141542, -0.07048827], dtype=float32), 1.0, False, False, {})
+(array([-0.07616094, -0.20429987, -0.00282519,  0.22174774], dtype=float32), 1.0, False, False, {})
+(array([-0.08024693, -0.00913766,  0.00160977, -0.07182502], dtype=float32), 1.0, False, False, {})
+(array([-8.0429688e-02,  1.8596119e-01,  1.7326546e-04, -3.6399963e-01],
+      dtype=float32), 1.0, False, False, {})
+(array([-0.07671046,  0.38108066, -0.00710673, -0.6566279 ], dtype=float32), 1.0, False, False, {})
+(array([-0.06908885,  0.18605837, -0.02023928, -0.3661912 ], dtype=float32), 1.0, False, False, {})
+(array([-0.06536768,  0.381462  , -0.02756311, -0.6651866 ], dtype=float32), 1.0, False, False, {})
+(array([-0.05773844,  0.18673407, -0.04086684, -0.38130814], dtype=float32), 1.0, False, False, {})
+(array([-0.05400376, -0.00778449, -0.048493  , -0.10178544], dtype=float32), 1.0, False, False, {})
+(array([-0.05415945,  0.18799768, -0.05052871, -0.40936482], dtype=float32), 1.0, False, False, {})
+(array([-0.0503995 ,  0.38379824, -0.05871601, -0.71753997], dtype=float32), 1.0, False, False, {})
+(array([-0.04272353,  0.5796815 , -0.07306681, -1.0281111 ], dtype=float32), 1.0, False, False, {})
+(array([-0.0311299 ,  0.3856041 , -0.09362902, -0.75923425], dtype=float32), 1.0, False, False, {})
+(array([-0.02341782,  0.19188842, -0.10881371, -0.49742016], dtype=float32), 1.0, False, False, {})
+(array([-0.01958005, -0.00154456, -0.11876212, -0.2409149 ], dtype=float32), 1.0, False, False, {})
+(array([-0.01961094, -0.19478747, -0.12358042,  0.01207365], dtype=float32), 1.0, False, False, {})
+(array([-0.02350669, -0.38794035, -0.12333895,  0.26335317], dtype=float32), 1.0, False, False, {})
+(array([-0.0312655 , -0.5811057 , -0.11807188,  0.51473033], dtype=float32), 1.0, False, False, {})
+(array([-0.04288761, -0.38453618, -0.10777728,  0.18729639], dtype=float32), 1.0, False, False, {})
+(array([-0.05057834, -0.5779643 , -0.10403135,  0.44412985], dtype=float32), 1.0, False, False, {})
+(array([-0.06213762, -0.3815361 , -0.09514875,  0.12055043], dtype=float32), 1.0, False, False, {})
+(array([-0.06976835, -0.57517517, -0.09273774,  0.38176367], dtype=float32), 1.0, False, False, {})
+(array([-0.08127185, -0.76886636, -0.08510246,  0.6438262 ], dtype=float32), 1.0, False, False, {})
+(array([-0.09664918, -0.9627056 , -0.07222594,  0.9085428 ], dtype=float32), 1.0, False, False, {})
+(array([-0.11590329, -0.76668423, -0.05405508,  0.5940614 ], dtype=float32), 1.0, False, False, {})
+(array([-0.13123697, -0.570849  , -0.04217386,  0.28485316], dtype=float32), 1.0, False, False, {})
+(array([-0.14265396, -0.76534486, -0.03647679,  0.5639421 ], dtype=float32), 1.0, False, False, {})
+(array([-0.15796085, -0.95993656, -0.02519795,  0.84491366], dtype=float32), 1.0, False, False, {})
+(array([-0.17715958, -1.1547058 , -0.00829968,  1.1295673 ], dtype=float32), 1.0, False, False, {})
+(array([-0.2002537 , -0.9594761 ,  0.01429167,  0.8342928 ], dtype=float32), 1.0, False, False, {})
+(array([-0.21944322, -1.1547904 ,  0.03097752,  1.1314359 ], dtype=float32), 1.0, False, False, {})
+(array([-0.24253902, -1.3503039 ,  0.05360624,  1.4336715 ], dtype=float32), 1.0, False, False, {})
+(array([-0.2695451 , -1.1558826 ,  0.08227967,  1.1582112 ], dtype=float32), 1.0, False, False, {})
+(array([-0.29266277, -0.9619237 ,  0.10544389,  0.89242   ], dtype=float32), 1.0, False, False, {})
+(array([-0.31190124, -1.1583058 ,  0.1232923 ,  1.2163    ], dtype=float32), 1.0, False, False, {})
+(array([-0.33506733, -0.9649706 ,  0.1476183 ,  0.9646548 ], dtype=float32), 1.0, False, False, {})
+(array([-0.35436675, -1.161734  ,  0.1669114 ,  1.2998323 ], dtype=float32), 1.0, False, False, {})
+(array([-0.37760144, -0.9690768 ,  0.19290803,  1.0637071 ], dtype=float32), 1.0, False, False, {})
+(array([-0.39698297, -1.1661556 ,  0.21418218,  1.4102057 ], dtype=float32), 1.0, True, False, {})
+(array([ 0.03078176,  0.23476493,  0.04783584, -0.28038993], dtype=float32), 1.0, False, False, {})
+(array([ 0.03547706,  0.42917302,  0.04222804, -0.55761015], dtype=float32), 1.0, False, False, {})
+(array([ 0.04406052,  0.2334845 ,  0.03107584, -0.25192767], dtype=float32), 1.0, False, False, {})
+(array([ 0.04873021,  0.42814925,  0.02603729, -0.53464895], dtype=float32), 1.0, False, False, {})
+(array([ 0.0572932 ,  0.62289554,  0.01534431, -0.8190153 ], dtype=float32), 1.0, False, False, {})
+(array([ 6.9751106e-02,  8.1780416e-01, -1.0360004e-03, -1.1068327e+00],
+      dtype=float32), 1.0, False, False, {})
+(array([ 0.08610719,  0.62269586, -0.02317266, -0.81447506], dtype=float32), 1.0, False, False, {})
+(array([ 0.09856111,  0.42789876, -0.03946216, -0.52917004], dtype=float32), 1.0, False, False, {})
+(array([ 0.10711908,  0.62355304, -0.05004556, -0.83402175], dtype=float32), 1.0, False, False, {})
+(array([ 0.11959014,  0.8193217 , -0.06672599, -1.1420144 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.13597658,  1.0152491 , -0.08956628, -1.4548545 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.15628156,  1.2113492 , -0.11866337, -1.7741228 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.18050854,  1.4075923 , -0.15414582, -2.1012225 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.2086604 ,  1.6038902 , -0.19617029, -2.4373178 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.2407382 ,  1.4109168 , -0.24491663, -2.2107143 ], dtype=float32), 1.0, True, False, {})
+(array([-0.0439709 ,  0.21333945, -0.01320921, -0.31192377], dtype=float32), 1.0, False, False, {})
+(array([-0.03970411,  0.40864706, -0.01944769, -0.608743  ], dtype=float32), 1.0, False, False, {})
+(array([-0.03153117,  0.21380231, -0.03162255, -0.32224843], dtype=float32), 1.0, False, False, {})
+(array([-0.02725513,  0.40935996, -0.03806752, -0.62473375], dtype=float32), 1.0, False, False, {})
+(array([-0.01906793,  0.21478957, -0.05056219, -0.34427872], dtype=float32), 1.0, False, False, {})
+(array([-0.01477214,  0.41059297, -0.05744777, -0.6524674 ], dtype=float32), 1.0, False, False, {})
+(array([-0.00656028,  0.21631612, -0.07049712, -0.37841326], dtype=float32), 1.0, False, False, {})
+(array([-0.00223395,  0.41236472, -0.07806538, -0.6924647 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.00601334,  0.60847795, -0.09191468, -1.0086665 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.0181829 ,  0.41469514, -0.112088  , -0.7462042 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.0264768 ,  0.61117053, -0.12701209, -1.0719528 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.03870021,  0.80772173, -0.14845115, -1.4016459 ], dtype=float32), 1.0, False, False, {})
+(array([ 0.05485465,  1.0043433 , -0.17648406, -1.736819  ], dtype=float32), 1.0, False, False, {})
+(array([ 0.07494152,  0.81161815, -0.21122044, -1.503839  ], dtype=float32), 1.0, True, False, {})
+Traceback (most recent call last):
+  File "c:\Users\JimG9\Desktop\GitHub Projects\generative_ai\project_experiments\vision_cart_pole.py", line 373, in <module>
+    optimize_model()
+  File "c:\Users\JimG9\Desktop\GitHub Projects\generative_ai\project_experiments\vision_cart_pole.py", line 295, in optimize_model
+    wandb.log({'Loss:': loss})
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\wandb\sdk\wandb_run.py", line 390, in wrapper
+    return func(self, *args, **kwargs)
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\wandb\sdk\wandb_run.py", line 341, in wrapper_fn
+    return func(self, *args, **kwargs)
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\wandb\sdk\wandb_run.py", line 331, in wrapper
+    return func(self, *args, **kwargs)
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\wandb\sdk\wandb_run.py", line 1752, in log
+    self._log(data=data, step=step, commit=commit)
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\wandb\sdk\wandb_run.py", line 1527, in _log
+    self._partial_history_callback(data, step, commit)
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\wandb\sdk\wandb_run.py", line 1397, in _partial_history_callback
+    self._backend.interface.publish_partial_history(
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\wandb\sdk\interface\interface.py", line 635, in publish_partial_history
+    data = history_dict_to_json(run, data, step=user_step, ignore_copy_err=True)
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\wandb\sdk\data_types\utils.py", line 52, in history_dict_to_json
+    payload[key] = val_to_json(
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\wandb\sdk\data_types\utils.py", line 82, in val_to_json
+    if util.is_pandas_data_frame(val):
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\wandb\util.py", line 444, in is_pandas_data_frame
+    import pandas as pd
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\pandas\__init__.py", line 50, in <module>
+    from pandas.core.api import (
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\pandas\core\api.py", line 48, in <module>
+    from pandas.core.groupby import (
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\pandas\core\groupby\__init__.py", line 1, in <module>
+    from pandas.core.groupby.generic import (
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\pandas\core\groupby\generic.py", line 73, in <module>
+    from pandas.core.frame import DataFrame
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\pandas\core\frame.py", line 193, in <module>
+    from pandas.core.series import Series
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\pandas\core\series.py", line 138, in <module>
+    from pandas.core.tools.datetimes import to_datetime
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\pandas\core\tools\datetimes.py", line 61, in <module>
+    from pandas.arrays import (
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 941, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1039, in get_data
+KeyboardInterrupt
