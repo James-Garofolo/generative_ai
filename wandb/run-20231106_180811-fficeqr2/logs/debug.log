@@ -1,0 +1,28 @@
+2023-11-06 18:08:11,805 INFO    MainThread:5964 [wandb_setup.py:_flush():76] Current SDK version is 0.15.10
+2023-11-06 18:08:11,806 INFO    MainThread:5964 [wandb_setup.py:_flush():76] Configure stats pid to 5964
+2023-11-06 18:08:11,806 INFO    MainThread:5964 [wandb_setup.py:_flush():76] Loading settings from C:\Users\Wu\.config\wandb\settings
+2023-11-06 18:08:11,806 INFO    MainThread:5964 [wandb_setup.py:_flush():76] Loading settings from C:\Users\Wu\Desktop\GitHub Projects\generative_ai\wandb\settings
+2023-11-06 18:08:11,806 INFO    MainThread:5964 [wandb_setup.py:_flush():76] Loading settings from environment variables: {}
+2023-11-06 18:08:11,807 INFO    MainThread:5964 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2023-11-06 18:08:11,814 INFO    MainThread:5964 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program_relpath': 'project_experiments\\vision_cart_pole.py', 'program': 'c:\\Users\\Wu\\Desktop\\GitHub Projects\\generative_ai\\project_experiments\\vision_cart_pole.py'}
+2023-11-06 18:08:11,815 INFO    MainThread:5964 [wandb_init.py:_log_setup():524] Logging user logs to C:\Users\Wu\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_180811-fficeqr2\logs\debug.log
+2023-11-06 18:08:11,815 INFO    MainThread:5964 [wandb_init.py:_log_setup():525] Logging internal logs to C:\Users\Wu\Desktop\GitHub Projects\generative_ai\wandb\run-20231106_180811-fficeqr2\logs\debug-internal.log
+2023-11-06 18:08:11,816 INFO    MainThread:5964 [wandb_init.py:init():564] calling init triggers
+2023-11-06 18:08:11,816 INFO    MainThread:5964 [wandb_init.py:init():571] wandb.init called with sweep_config: {}
+config: {}
+2023-11-06 18:08:11,816 INFO    MainThread:5964 [wandb_init.py:init():614] starting backend
+2023-11-06 18:08:11,816 INFO    MainThread:5964 [wandb_init.py:init():618] setting up manager
+2023-11-06 18:08:11,818 INFO    MainThread:5964 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=spawn, using: spawn
+2023-11-06 18:08:11,827 INFO    MainThread:5964 [wandb_init.py:init():624] backend started and connected
+2023-11-06 18:08:11,837 INFO    MainThread:5964 [wandb_init.py:init():715] updated telemetry
+2023-11-06 18:08:11,921 INFO    MainThread:5964 [wandb_init.py:init():748] communicating run to backend with 90.0 second timeout
+2023-11-06 18:08:12,244 INFO    MainThread:5964 [wandb_run.py:_on_init():2220] communicating current version
+2023-11-06 18:08:12,384 INFO    MainThread:5964 [wandb_run.py:_on_init():2229] got version response upgrade_message: "wandb version 0.15.12 is available!  To upgrade, please run:\n $ pip install wandb --upgrade"
+
+2023-11-06 18:08:12,384 INFO    MainThread:5964 [wandb_init.py:init():799] starting run threads in backend
+2023-11-06 18:08:12,758 INFO    MainThread:5964 [wandb_run.py:_console_start():2199] atexit reg
+2023-11-06 18:08:12,759 INFO    MainThread:5964 [wandb_run.py:_redirect():2054] redirect: wrap_raw
+2023-11-06 18:08:12,759 INFO    MainThread:5964 [wandb_run.py:_redirect():2119] Wrapping output streams.
+2023-11-06 18:08:12,759 INFO    MainThread:5964 [wandb_run.py:_redirect():2144] Redirects installed.
+2023-11-06 18:08:12,760 INFO    MainThread:5964 [wandb_init.py:init():840] run started, returning control to user process
+2023-11-06 18:14:51,446 WARNING MsgRouterThr:5964 [router.py:message_loop():77] message_loop has been closed

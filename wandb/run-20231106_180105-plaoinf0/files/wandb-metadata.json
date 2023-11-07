@@ -1,0 +1,53 @@
+{
+    "os": "Windows-10-10.0.19045-SP0",
+    "python": "3.10.9",
+    "heartbeatAt": "2023-11-06T23:01:06.568286",
+    "startedAt": "2023-11-06T23:01:05.804858",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "c:\\Users\\Wu\\Desktop\\GitHub Projects\\generative_ai\\project_experiments\\vision_cart_pole.py",
+    "codePathLocal": "project_experiments\\vision_cart_pole.py",
+    "codePath": "project_experiments\\vision_cart_pole.py",
+    "git": {
+        "remote": "https://github.com/James-Garofolo/generative_ai.git",
+        "commit": "011268c9376cb6182cbaec10f36fff64e0c5bc75"
+    },
+    "email": "garofo24@students.rowan.edu",
+    "root": "C:/Users/Wu/Desktop/GitHub Projects/generative_ai",
+    "host": "DESKTOP-41VNI9U",
+    "username": "Wu",
+    "executable": "C:\\Users\\Wu\\.pyenv\\pyenv-win\\versions\\3.10.9\\python.exe",
+    "cpu_count": 6,
+    "cpu_count_logical": 12,
+    "cpu_freq": {
+        "current": 3600.0,
+        "min": 0.0,
+        "max": 3600.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 3600.0,
+            "min": 0.0,
+            "max": 3600.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 237.39777755737305,
+            "used": 213.48516082763672
+        }
+    },
+    "gpu": "NVIDIA GeForce RTX 2080",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 2080",
+            "memory_total": 8589934592
+        }
+    ],
+    "memory": {
+        "total": 15.6561279296875
+    }
+}

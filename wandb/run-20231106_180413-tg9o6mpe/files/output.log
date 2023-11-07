@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "c:\Users\Wu\Desktop\GitHub Projects\generative_ai\project_experiments\vision_cart_pole.py", line 63, in <module>
+    T.Resize(RESIZE_PIXELS, interpolation=Image.CUBIC),
+AttributeError: module 'PIL.Image' has no attribute 'CUBIC'
