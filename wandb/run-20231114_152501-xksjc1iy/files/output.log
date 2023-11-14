@@ -1,0 +1,24 @@
+rgb_array
+Screen height:  60  | Width:  135
+C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\torchvision\transforms\transforms.py:329: UserWarning: Argument 'interpolation' of type int is deprecated since 0.13 and will be removed in 0.15. Please use InterpolationMode enum.
+  warnings.warn(
+C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\gym\envs\registration.py:555: UserWarning: [33mWARN: The environment CartPole-v0 is out of date. You should consider upgrading to version `v1`.
+  logger.warn(
+
+  0%|                                                                                                                                       | 8/50000 [00:03<5:27:33,  2.54it/s]
+Traceback (most recent call last):
+  File "c:\Users\JimG9\Desktop\GitHub Projects\generative_ai\project_experiments\vision_cart_pole.py", line 459, in <module>
+    optimize_env_model()
+  File "c:\Users\JimG9\Desktop\GitHub Projects\generative_ai\project_experiments\vision_cart_pole.py", line 375, in optimize_env_model
+    predicted_next_states = env_net(state_batch[non_final_mask], action_batch[non_final_mask]).detach()
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\torch\nn\modules\module.py", line 1190, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "c:\Users\JimG9\Desktop\GitHub Projects\generative_ai\project_experiments\vision_cart_pole.py", line 181, in forward
+    return self.decode(torch.cat((z, a), dim=1))
+  File "c:\Users\JimG9\Desktop\GitHub Projects\generative_ai\project_experiments\vision_cart_pole.py", line 174, in decode
+    z = F.leaky_relu(self.un_latentize(z), 0.2)
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\torch\nn\modules\module.py", line 1190, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "C:\Users\JimG9\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\torch\nn\modules\linear.py", line 114, in forward
+    return F.linear(input, self.weight, self.bias)
+RuntimeError: mat1 and mat2 shapes cannot be multiplied (119x101 and 102x1792)

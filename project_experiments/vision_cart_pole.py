@@ -16,8 +16,8 @@ from collections import deque
 from tqdm import tqdm
 
 # Wandb
-import wandb
-wandb.init(project="Cartpole Vision RL")
+#import wandb
+#wandb.init(project="Cartpole Vision RL")
 
 ############ HYPERPARAMETERS ##############
 BATCH_SIZE = 128 # original = 128
@@ -135,6 +135,52 @@ class DQN(nn.Module):
         x = F.relu(self.bn3(self.conv3(x)))
         return self.head(x.view(x.size(0), -1))
     
+class D_AutoEncoder(nn.Module):
+
+    def __init__(self, h, w, latent_dim, actions):
+        super(D_AutoEncoder, self).__init__()
+        self.conv1 = nn.Conv2d(nn_inputs, HIDDEN_LAYER_1, kernel_size=KERNEL_SIZE, stride=STRIDE) 
+        self.bn1 = nn.BatchNorm2d(HIDDEN_LAYER_1)
+        self.conv2 = nn.Conv2d(HIDDEN_LAYER_1, HIDDEN_LAYER_2, kernel_size=KERNEL_SIZE, stride=STRIDE)
+        self.bn2 = nn.BatchNorm2d(HIDDEN_LAYER_2)
+        self.conv3 = nn.Conv2d(HIDDEN_LAYER_2, HIDDEN_LAYER_3, kernel_size=KERNEL_SIZE, stride=STRIDE)
+        self.bn3 = nn.BatchNorm2d(HIDDEN_LAYER_3)
+        # Number of Linear input connections depends on output of conv2d layers
+        # and therefore the input image size, so compute it.
+        def conv2d_size_out(size, kernel_size = KERNEL_SIZE, stride = STRIDE):
+            return (size - (kernel_size - 1) - 1) // stride  + 1
+        convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w)))
+        convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h)))
+        linear_input_size = convw * convh * 32
+        self.convh = convh
+        self.convw = convw
+        nn.Dropout()
+        self.latentize = nn.Linear(linear_input_size, latent_dim)
+        self.un_latentize = nn.Linear(latent_dim + actions, linear_input_size)
+        self.tconv3 = nn.ConvTranspose2d(HIDDEN_LAYER_3, HIDDEN_LAYER_2, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,0])
+        self.tconv2 = nn.ConvTranspose2d(HIDDEN_LAYER_2, HIDDEN_LAYER_1, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,1])
+        self.tconv1 = nn.ConvTranspose2d(HIDDEN_LAYER_1, nn_inputs, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,0])
+
+    # Called with either one element to determine next action, or a batch
+    # during optimization. Returns tensor([[left0exp,right0exp]...]).
+    def encode(self, x):
+        #print(x.shape)
+        x = F.leaky_relu(self.bn1(self.conv1(x)), 0.2)
+        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.2)
+        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.2)
+        return self.latentize(x.view(x.size(0), -1))
+    
+    def decode(self, z):
+        z = F.leaky_relu(self.un_latentize(z), 0.2)
+        z = F.leaky_relu(self.tconv3(z.view(z.size(0), -1, self.convh, self.convw)), 0.2)
+        z = F.leaky_relu(self.tconv2(z), 0.2)
+        return torch.sigmoid(self.tconv1(z))
+    
+    def forward(self, x, a):
+        z = self.encode(x)
+        a = torch.cat((a, torch.ones_like(a)-a), dim=1)
+        return self.decode(torch.cat((z, a), dim=1))
+    
 # Cart location for centering image crop
 def get_cart_location(screen_width):
     world_width = env.x_threshold * 2
@@ -191,6 +237,7 @@ n_actions = env.action_space.n
 
 policy_net = DQN(screen_height, screen_width, n_actions).to(device)
 target_net = DQN(screen_height, screen_width, n_actions).to(device)
+env_net = D_AutoEncoder(screen_height, screen_width, 100, n_actions).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
@@ -205,6 +252,8 @@ if LOAD_MODEL == True:
 
 optimizer = optim.RMSprop(policy_net.parameters())
 memory = ReplayMemory(MEMORY_SIZE)
+
+env_optim = optim.Adam(env_net.parameters(), 0.001)
 
 steps_done = 0
 
@@ -294,7 +343,7 @@ def optimize_model():
     # Compute Huber loss
     loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
     plt.figure(2)
-    wandb.log({'Loss:': loss})
+    #wandb.log({'Loss:': loss})
 
     # Optimize the model
     optimizer.zero_grad()
@@ -302,6 +351,42 @@ def optimize_model():
     for param in policy_net.parameters():
         param.grad.data.clamp_(-1, 1)
     optimizer.step()
+
+# Training 
+def optimize_env_model():
+    if len(memory) < BATCH_SIZE:
+        return
+    transitions = memory.sample(BATCH_SIZE)
+    # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
+    # detailed explanation). This converts batch-array of Transitions
+    # to Transition of batch-arrays.
+    batch = Transition(*zip(*transitions))
+
+    # Compute a mask of non-final states and concatenate the batch elements
+    # (a final state would've been the one after which simulation ended)
+    non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+                                          batch.next_state)), device=device, dtype=torch.bool)
+    non_final_next_states = torch.cat([s for s in batch.next_state
+                                                if s is not None])
+    # torch.cat concatenates tensor sequence
+    state_batch = torch.cat(batch.state)
+    action_batch = torch.cat(batch.action)
+    reward_batch = torch.cat(batch.reward).type(torch.FloatTensor).to(device)
+
+    predicted_next_states = env_net(state_batch[non_final_mask], action_batch[non_final_mask])#.detach()
+
+    # Compute Huber loss
+    loss = F.mse_loss(predicted_next_states, non_final_next_states)
+
+    plt.figure(2)
+    #wandb.log({'env_Loss:': loss})
+
+    # Optimize the model
+    env_optim.zero_grad()
+    loss.backward()
+    #for param in policy_net.parameters():
+    #    param.grad.data.clamp_(-1, 1)
+    env_optim.step()
 
 episodes_trajectories = []
 episodes_after_stop = 100
@@ -314,11 +399,14 @@ for j in range(runs):
     mean_last = deque([0] * LAST_EPISODES_NUM, LAST_EPISODES_NUM)
     policy_net = DQN(screen_height, screen_width, n_actions).to(device)
     target_net = DQN(screen_height, screen_width, n_actions).to(device)
+    env_net = D_AutoEncoder(screen_height, screen_width, 100, n_actions).to(device)
     target_net.load_state_dict(policy_net.state_dict())
     target_net.eval()
 
     optimizer = optim.RMSprop(policy_net.parameters())
     memory = ReplayMemory(MEMORY_SIZE)
+    env_optim = optim.Adam(env_net.parameters(), 0.001)
+
     
     count_final = 0
     
@@ -365,12 +453,13 @@ for j in range(runs):
                 episode_durations.append(t + 1)
                 mean_last.append(t + 1)
                 mean = 0
-                wandb.log({'Episode duration': t+1 , 'Episode number': i_episode})
+                #wandb.log({'Episode duration': t+1 , 'Episode number': i_episode})
                 for i in range(LAST_EPISODES_NUM):
                     mean = mean_last[i] + mean
                 mean = mean/LAST_EPISODES_NUM
                 if mean < TRAINING_STOP and stop_training == False:
                     optimize_model()
+                    optimize_env_model()
                 else:
                     stop_training = True
                 break
