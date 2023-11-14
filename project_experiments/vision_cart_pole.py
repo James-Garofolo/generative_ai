@@ -393,12 +393,14 @@ plt.show()
 
 # Cherry picking best runs
 best = []
-best.append(episodes_trajectories[0])
+for et in episodes_trajectories:
+    best.append(et)
+"""best.append(episodes_trajectories[0])
 best.append(episodes_trajectories[1])
 best.append(episodes_trajectories[2])
 best.append(episodes_trajectories[3])
 best.append(episodes_trajectories[5])
-best.append(episodes_trajectories[6])
+best.append(episodes_trajectories[6])"""
 
 maximum = 0
 for i in range(len(best)):

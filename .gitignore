@@ -1,3 +1,4 @@
 test.py
 small_test.py
 __pycache__/
+wandb/
