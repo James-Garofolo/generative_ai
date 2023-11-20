@@ -603,11 +603,8 @@ fig.savefig('score.png')
 
 """for a in range(len(vae_losses)):
     if len(vae_losses[a]) < t.size:
-        try:
-            vae_losses[a].extend([vae_losses[a][-1]]*(t.size-len(vae_losses[a])))
-        except IndexError:
-            print(len(vae_losses), len(vae_losses[a]), a)
-            raise Exception("fuck")
+        vae_losses[a].extend([vae_losses[a][-1]]*(t.size-len(vae_losses[a])))
+            
 
 vae_losses = np.array(vae_losses)
 vae_losses = np.mean(vae_losses, axis=0)
