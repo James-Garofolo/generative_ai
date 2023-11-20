@@ -600,18 +600,3 @@ ax.plot(t, score_mean, label='Score Mean')
 ax.legend()
 fig.savefig('score.png')
 
-
-"""for a in range(len(vae_losses)):
-    if len(vae_losses[a]) < t.size:
-        vae_losses[a].extend([vae_losses[a][-1]]*(t.size-len(vae_losses[a])))
-            
-
-vae_losses = np.array(vae_losses)
-vae_losses = np.mean(vae_losses, axis=0)
-
-fig, ax = plt.subplots(figsize=(16, 8))
-ax.set_xlabel('Episode')
-ax.set_ylabel('loss')
-# ax.set_title('Inverted Pendulum Training Plot from Pixels')
-ax.plot(t, vae_losses)
-fig.savefig('loss.png')"""
