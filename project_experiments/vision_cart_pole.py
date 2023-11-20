@@ -14,6 +14,18 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 from collections import deque
 from tqdm import tqdm
+import os, shutil
+from random import randint
+folder = 'project_exp_figs'
+for filename in os.listdir(folder):
+    file_path = os.path.join(folder, filename)
+    try:
+        if os.path.isfile(file_path) or os.path.islink(file_path):
+            os.unlink(file_path)
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)
+    except Exception as e:
+        print('Failed to delete %s. Reason: %s' % (file_path, e))
 
 # Wandb
 #import wandb
@@ -76,7 +88,7 @@ is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython:
     from IPython import display
 
-plt.ion()
+#plt.ion()
 
 # If gpu is to be used
 
@@ -222,7 +234,7 @@ else:
     plt.imshow(get_screen().cpu().squeeze(0).permute(
         1, 2, 0).numpy().squeeze(), cmap='gray')
 plt.title('Example extracted screen')
-plt.show()
+#plt.ioff()
 
 env.close()
 
@@ -237,7 +249,7 @@ n_actions = env.action_space.n
 
 policy_net = DQN(screen_height, screen_width, n_actions).to(device)
 target_net = DQN(screen_height, screen_width, n_actions).to(device)
-env_net = D_AutoEncoder(screen_height, screen_width, 100, n_actions).to(device)
+env_net = D_AutoEncoder(screen_height, screen_width, 10, n_actions).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
@@ -274,35 +286,7 @@ def select_action(state, stop_training):
     else:
         return torch.tensor([[random.randrange(n_actions)]], device=device, dtype=torch.long)
     
-# Plotting
-def plot_durations(score):
-    fig, ax = plt.subplots(figsize=(16,8))
-    durations_t = torch.tensor(episode_durations, dtype=torch.float)
-    episode_number = len(durations_t) 
-    ax.set_title('Training...')
-    ax.set_xlabel('Episode')
-    ax.set_ylabel('Duration')
-    dur = durations_t.numpy()
-    plt.style.use('seaborn') #Change/Remove This If you Want
-#     ax.plot(dur, label= 'Score')
-    ax.fill_between(np.linspace(1,episode_number,episode_number),
-                    dur - dur.std(), dur + dur.std(), alpha=0.2)
 
-    plt.hlines(195, 0, episode_number, colors='red', linestyles=':', label='Win Threshold')
-    
-    # Take 100 episode averages and plot them too
-    if len(durations_t) >= 100:
-        means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
-        last100_mean = means[episode_number -100].item()
-        means = torch.cat((torch.zeros(99), means))
-        ax.plot(means.numpy(), label= 'Last 100 mean')
-        print('Episode: ', episode_number, ' | Score: ', score, '| Last 100 mean = ', last100_mean)
-    ax.legend(loc='upper left')
-    fig.savefig('plots/' + graph_name)
-#     if is_ipython:
-#         display.clear_output(wait=True)
-#         display.display(plt.gcf())
-    fig.show()
 
 # Training 
 def optimize_model():
@@ -342,7 +326,8 @@ def optimize_model():
 
     # Compute Huber loss
     loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
-    plt.figure(2)
+    #plt.figure(2)
+
     #wandb.log({'Loss:': loss})
 
     # Optimize the model
@@ -371,14 +356,44 @@ def optimize_env_model():
     # torch.cat concatenates tensor sequence
     state_batch = torch.cat(batch.state)
     action_batch = torch.cat(batch.action)
-    reward_batch = torch.cat(batch.reward).type(torch.FloatTensor).to(device)
 
     predicted_next_states = env_net(state_batch[non_final_mask], action_batch[non_final_mask])#.detach()
 
-    # Compute Huber loss
     loss = F.mse_loss(predicted_next_states, non_final_next_states)
 
-    plt.figure(2)
+    if i_episode%50==0:
+        pic_id = randint(0, predicted_next_states.shape[0])
+        fig, ax = plt.subplots(2,2)
+        if GRAYSCALE == 0:
+            ax[0,0].imshow(predicted_next_states[pic_id,0].cpu().numpy(),
+                    interpolation='none')
+            ax[0,0].set_title("pred0")
+            ax[1,0].imshow(non_final_next_states[pic_id,0].cpu().numpy(),
+                    interpolation='none')
+            ax[1,0].set_title("real0")
+            ax[0,1].imshow(predicted_next_states[pic_id,1].cpu().numpy(),
+                    interpolation='none')
+            ax[0,1].set_title("pred1")
+            ax[1,1].imshow(non_final_next_states[pic_id,1].cpu().numpy(),
+                    interpolation='none')
+            ax[1,1].set_title("real1")
+        else:
+            ax[0,0].imshow(predicted_next_states[pic_id,0].detach().cpu().numpy(), 
+                    cmap='gray')
+            ax[0,0].set_title("pred0")
+            ax[1,0].imshow(non_final_next_states[pic_id,0].detach().cpu().numpy(), 
+                    cmap='gray')
+            ax[1,0].set_title("real0")
+            ax[0,1].imshow(predicted_next_states[pic_id,1].detach().cpu().numpy(), 
+                    cmap='gray')
+            ax[0,1].set_title("pred1")
+            ax[1,1].imshow(non_final_next_states[pic_id,1].detach().cpu().numpy(), 
+                    cmap='gray')
+            ax[1,1].set_title("real1")
+        fig.suptitle('Example predicted screen')
+        fig.savefig(f"project_exp_figs/screen{j}_{i_episode}.png")
+        plt.close(fig)
+    #plt.show()
     #wandb.log({'env_Loss:': loss})
 
     # Optimize the model
@@ -387,11 +402,13 @@ def optimize_env_model():
     #for param in policy_net.parameters():
     #    param.grad.data.clamp_(-1, 1)
     env_optim.step()
+    return loss.item()
 
 episodes_trajectories = []
+vae_losses = []
 episodes_after_stop = 100
 
-runs = 5
+runs = 3
 
 # MAIN LOOP
 stop_training = False
@@ -412,6 +429,7 @@ for j in range(runs):
     
     steps_done = 0
     episode_durations = []
+    vae_loss = []
     for i_episode in tqdm(range(N_EPISODES)):
         # Initialize the environment and state
         env.reset()
@@ -459,7 +477,9 @@ for j in range(runs):
                 mean = mean/LAST_EPISODES_NUM
                 if mean < TRAINING_STOP and stop_training == False:
                     optimize_model()
-                    optimize_env_model()
+                    l = optimize_env_model()
+                    if not(l is None):
+                        vae_loss.append(l)
                 else:
                     stop_training = True
                 break
@@ -472,12 +492,13 @@ for j in range(runs):
             if count_final >= 100:
                 break
 
-            
     print('Complete')
     stop_training = False
     episodes_trajectories.append(episode_durations)
+    vae_losses.append(vae_loss)
+
     
-plt.ioff()
+
 plt.show()
 
 # Cherry picking best runs
@@ -504,6 +525,7 @@ for i in range(len(best)):
     
 best = np.asarray(best)
 
+
 # To numpy
 score_mean = np.zeros(maximum)
 score_std = np.zeros(maximum)
@@ -517,6 +539,9 @@ print(len(last100_mean))
 
 t = np.arange(0, maximum, 1)
 
+
+
+
 # from scipy.interpolate import make_interp_spline # make smooth version
 # interpol = make_interp_spline(t, score_mean, k=3)  # type: BSpline
 
@@ -528,6 +553,21 @@ ax.set_xlabel('Episode')
 ax.set_ylabel('Score')
 # ax.set_title('Inverted Pendulum Training Plot from Pixels')
 ax.plot(t, score_mean, label='Score Mean')
-ax.plot(t, last100_mean, color='purple', linestyle='dotted', label='Smoothed mean')
+#ax.plot(t, last100_mean, color='purple', linestyle='dotted', label='Smoothed mean')
 ax.legend()
 fig.savefig('score.png')
+
+print(vae_losses[0][0])
+for a in range(len(vae_losses)):
+    if len(vae_losses[a]) < t.size:
+        vae_losses[a].extend([vae_losses[a][-1]]*(t.size-len(vae_losses[a])))
+
+vae_losses = np.array(vae_losses)
+vae_losses = np.mean(vae_losses, axis=0)
+
+fig, ax = plt.subplots(figsize=(16, 8))
+ax.set_xlabel('Episode')
+ax.set_ylabel('loss')
+# ax.set_title('Inverted Pendulum Training Plot from Pixels')
+ax.plot(t, vae_losses)
+fig.savefig('loss.png')
