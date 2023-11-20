@@ -149,7 +149,7 @@ class DQN(nn.Module):
     
 class D_AutoEncoder(nn.Module):
 
-    def __init__(self, h, w, latent_dim, actions):
+    def __init__(self, h, w, latent_dim, actions, action_latents):
         super(D_AutoEncoder, self).__init__()
         self.conv1 = nn.Conv2d(nn_inputs, HIDDEN_LAYER_1, kernel_size=KERNEL_SIZE, stride=STRIDE) 
         self.bn1 = nn.BatchNorm2d(HIDDEN_LAYER_1)
@@ -168,7 +168,8 @@ class D_AutoEncoder(nn.Module):
         self.convw = convw
         nn.Dropout()
         self.latentize = nn.Linear(linear_input_size, latent_dim)
-        self.un_latentize = nn.Linear(latent_dim + actions, linear_input_size)
+        self.action_encode = nn.Linear(actions, action_latents)
+        self.un_latentize = nn.Linear(latent_dim + action_latents, linear_input_size)
         self.tconv3 = nn.ConvTranspose2d(HIDDEN_LAYER_3, HIDDEN_LAYER_2, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,0])
         self.tconv2 = nn.ConvTranspose2d(HIDDEN_LAYER_2, HIDDEN_LAYER_1, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,1])
         self.tconv1 = nn.ConvTranspose2d(HIDDEN_LAYER_1, nn_inputs, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,0])
@@ -190,7 +191,8 @@ class D_AutoEncoder(nn.Module):
     
     def forward(self, x, a):
         z = self.encode(x)
-        a = torch.cat((a, torch.ones_like(a)-a), dim=1)
+        a = torch.cat((a, torch.ones_like(a)-a), dim=1).float()
+        a = F.leaky_relu(self.action_encode(a))
         return self.decode(torch.cat((z, a), dim=1))
     
 # Cart location for centering image crop
@@ -249,7 +251,7 @@ n_actions = env.action_space.n
 
 policy_net = DQN(screen_height, screen_width, n_actions).to(device)
 target_net = DQN(screen_height, screen_width, n_actions).to(device)
-env_net = D_AutoEncoder(screen_height, screen_width, 10, n_actions).to(device)
+env_net = D_AutoEncoder(screen_height, screen_width, 10, n_actions, 5).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
@@ -361,7 +363,7 @@ def optimize_env_model():
 
     loss = F.mse_loss(predicted_next_states, non_final_next_states)
 
-    print(torch.max(non_final_next_states), torch.min(non_final_next_states))
+    #print(torch.max(non_final_next_states), torch.min(non_final_next_states))
     if i_episode%50==0:
         pic_id = randint(0, predicted_next_states.shape[0])
         fig, ax = plt.subplots(2,2)
@@ -417,7 +419,7 @@ for j in range(runs):
     mean_last = deque([0] * LAST_EPISODES_NUM, LAST_EPISODES_NUM)
     policy_net = DQN(screen_height, screen_width, n_actions).to(device)
     target_net = DQN(screen_height, screen_width, n_actions).to(device)
-    env_net = D_AutoEncoder(screen_height, screen_width, 100, n_actions).to(device)
+    env_net = D_AutoEncoder(screen_height, screen_width, 10, n_actions, 5).to(device)
     target_net.load_state_dict(policy_net.state_dict())
     target_net.eval()
 
