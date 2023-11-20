@@ -265,7 +265,7 @@ if LOAD_MODEL == True:
 optimizer = optim.RMSprop(policy_net.parameters())
 memory = ReplayMemory(MEMORY_SIZE)
 
-env_optim = optim.Adam(env_net.parameters(), 0.001)
+env_optim = optim.Adam(env_net.parameters(), 0.01)
 
 steps_done = 0
 
@@ -361,6 +361,7 @@ def optimize_env_model():
 
     loss = F.mse_loss(predicted_next_states, non_final_next_states)
 
+    print(torch.max(non_final_next_states), torch.min(non_final_next_states))
     if i_episode%50==0:
         pic_id = randint(0, predicted_next_states.shape[0])
         fig, ax = plt.subplots(2,2)
