@@ -515,7 +515,7 @@ for j in range(runs):
                 fake_screens.append(fake_screen[:,0,:,:].view(1,1,60,135))
                 
                 fake_next_state = torch.cat(list(fake_screens), dim=1) if not done else None
-                """
+                
                 # Reward modification for better stability
                 x = fake_state_vars[:,0]
                 theta = fake_state_vars[:,2]
