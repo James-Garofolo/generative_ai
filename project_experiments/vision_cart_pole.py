@@ -35,7 +35,8 @@ for filename in os.listdir(folder):
 BATCH_SIZE = 128 # original = 128
 #env_batch_size = 256
 env_epochs = 30
-env_loss_ratio = 1.5 # loss = recon_loss + env_loss_ratio*reward_loss
+env_loss_ratio = 1.5 # recon_loss = img_loss + env_loss_ratio*reward_loss
+kl_ratio = 0.1 # loss = recon_loss + kl_ratio+kl_dif_loss
 env_lr = 0.0009
 env_decay = 0.95
 GAMMA = 0.999 # original = 0.999
@@ -199,7 +200,8 @@ class D_AutoEncoder(nn.Module):
         self.convh = convh
         self.convw = convw
         nn.Dropout()
-        self.latentize = nn.Linear(linear_input_size, latent_dim)
+        self.latent_mu = nn.Linear(linear_input_size, latent_dim)
+        self.latent_sigma = nn.Linear(linear_input_size, latent_dim)
         self.action_encode = nn.Linear(actions, action_latents)
         self.un_latentize = nn.Linear(latent_dim + action_latents, linear_input_size)
         self.tconv3 = nn.ConvTranspose2d(HIDDEN_LAYER_3, deconv_ch2, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,0])
@@ -214,8 +216,15 @@ class D_AutoEncoder(nn.Module):
         x = F.leaky_relu(self.bn1(self.conv1(x)), 0.2)
         x = F.leaky_relu(self.bn2(self.conv2(x)), 0.2)
         x = F.leaky_relu(self.bn3(self.conv3(x)), 0.2)
-        return self.latentize(x.view(x.size(0), -1))
+        mu = self.latent_mu(x.view(x.size(0), -1))
+        log_sigma = self.latent_sigma(x.view(x.size(0), -1))
+        return mu, log_sigma
     
+    def reparemetrize(self, mu, sigma):
+        epsilon = torch.randn_like(sigma).to(device)
+        return mu + epsilon * sigma
+
+
     def decode(self, z):
         z = F.leaky_relu(self.un_latentize(z), 0.2)
         rw = self.reward_decode(z)
@@ -224,10 +233,12 @@ class D_AutoEncoder(nn.Module):
         return torch.sigmoid(self.tconv1(z)), rw.view(-1, n_env_vars)
     
     def forward(self, x, a):
-        z = self.encode(x)
+        mu, log_sigma = self.encode(x)
+        z = self.reparemetrize(mu, torch.exp(0.5*log_sigma))
         a = torch.cat((a, torch.ones_like(a)-a), dim=1).float()
         a = F.leaky_relu(self.action_encode(a))
-        return self.decode(torch.cat((z, a), dim=1))
+        screen, state_vars = self.decode(torch.cat((z, a), dim=1))
+        return screen, state_vars, mu, log_sigma
     
 # Cart location for centering image crop
 def get_cart_location(screen_width):
@@ -380,10 +391,13 @@ def optimize_env_model():
         reward_batch = torch.cat(batch.reward)
         state_variable_batch = torch.cat(batch.state_vars)
 
-        predicted_next_states, predicted_vars = env_net(state_batch[non_final_mask], action_batch[non_final_mask])
+        predicted_next_states, predicted_vars, mu, log_sigma = env_net(state_batch[non_final_mask], \
+                                                                       action_batch[non_final_mask])
 
         loss = F.mse_loss(predicted_next_states, non_final_next_states)
         loss += env_loss_ratio*F.mse_loss(predicted_vars, state_variable_batch[non_final_mask])
+        loss -= kl_ratio*0.5 * torch.sum(1+ log_sigma - mu.pow(2) - log_sigma.exp())
+        
         env_optim.zero_grad()
         loss.backward()
         env_optim.step()
@@ -509,7 +523,7 @@ for j in range(runs):
                 # Select and perform an action
                 fake_action = select_action(state, stop_training)
 
-                fake_screen, fake_state_vars = env_net(state, fake_action)
+                fake_screen, fake_state_vars, _, _ = env_net(state, fake_action)
                 #print(fake_screen.shape, screens[-1].shape)
                 # Observe new state
                 fake_screens.append(fake_screen[:,0,:,:].view(1,1,60,135))
