@@ -477,7 +477,7 @@ for j in range(runs):
             # Move to the next state
             state = next_state
             #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fake~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            """if not done:
+            if not done:
                 # Select and perform an action
                 fake_action = select_action(fake_state, stop_training)
 
@@ -487,7 +487,7 @@ for j in range(runs):
                 fake_screens.append(fake_screen[:,0,:,:].view(1,1,60,135))
                 
                 fake_next_state = torch.cat(list(fake_screens), dim=1) if not done else None
-
+                """
                 # Reward modification for better stability
                 x, x_dot, theta, theta_dot = state_variables
                 r1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
