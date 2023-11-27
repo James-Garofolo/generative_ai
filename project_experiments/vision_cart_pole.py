@@ -35,8 +35,8 @@ for filename in os.listdir(folder):
 BATCH_SIZE = 128 # original = 128
 #env_batch_size = 256
 env_epochs = 30
-env_loss_ratio = 1.5 # recon_loss = img_loss + env_loss_ratio*reward_loss
-kl_ratio = 0.1 # loss = recon_loss + kl_ratio+kl_dif_loss
+env_loss_ratio = 0.5 # recon_loss = img_loss + env_loss_ratio*reward_loss
+kl_ratio = 0.01 # loss = recon_loss + kl_ratio+kl_dif_loss
 env_lr = 0.0009
 env_decay = 0.95
 GAMMA = 0.999 # original = 0.999
@@ -235,6 +235,7 @@ class D_AutoEncoder(nn.Module):
     def forward(self, x, a):
         mu, log_sigma = self.encode(x)
         z = self.reparemetrize(mu, torch.exp(0.5*log_sigma))
+        #z = mu
         a = torch.cat((a, torch.ones_like(a)-a), dim=1).float()
         a = F.leaky_relu(self.action_encode(a))
         screen, state_vars = self.decode(torch.cat((z, a), dim=1))
@@ -394,9 +395,11 @@ def optimize_env_model():
         predicted_next_states, predicted_vars, mu, log_sigma = env_net(state_batch[non_final_mask], \
                                                                        action_batch[non_final_mask])
 
-        loss = F.mse_loss(predicted_next_states, non_final_next_states)
-        loss += env_loss_ratio*F.mse_loss(predicted_vars, state_variable_batch[non_final_mask])
+        loss = F.smooth_l1_loss(predicted_next_states, non_final_next_states)
+        loss += env_loss_ratio*F.smooth_l1_loss(predicted_vars, state_variable_batch[non_final_mask])
+        #print("b",loss.item())
         loss -= kl_ratio*0.5 * torch.sum(1+ log_sigma - mu.pow(2) - log_sigma.exp())
+        #print("a",loss.item())
         
         env_optim.zero_grad()
         loss.backward()
@@ -519,7 +522,7 @@ for j in range(runs):
             # Move to the next state
             state = next_state
             #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fake~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            if not done:
+            """if not done:
                 # Select and perform an action
                 fake_action = select_action(state, stop_training)
 
@@ -545,7 +548,7 @@ for j in range(runs):
                         reward = reward - 20 
 
                 # Store the transition in memory
-                fake_memory.push(fake_state, fake_action, fake_next_state, reward)
+                fake_memory.push(fake_state, fake_action, fake_next_state, reward)"""
 
             #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~process~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
