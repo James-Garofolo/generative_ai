@@ -34,9 +34,10 @@ for filename in os.listdir(folder):
 ############ HYPERPARAMETERS ##############
 BATCH_SIZE = 128 # original = 128
 #env_batch_size = 256
-env_epochs = 10
-env_lr = 0.001
-env_decay = 0.9
+env_epochs = 30
+env_loss_ratio = 1.5 # loss = recon_loss + env_loss_ratio*reward_loss
+env_lr = 0.0009
+env_decay = 0.95
 GAMMA = 0.999 # original = 0.999
 EPS_START = 0.9 # original = 0.9
 EPS_END = 0.01 # original = 0.05
@@ -102,8 +103,8 @@ if is_ipython:
 
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
-env_transition = namedtuple('Transition',
-                        ('state', 'action', 'next_state', 'state_vars'))
+env_transition = namedtuple('Env_Transition',
+                        ('state', 'action', 'next_state', 'reward', 'state_vars'))
 
 # Memory for Experience Replay
 class ReplayMemory(object):
@@ -118,6 +119,27 @@ class ReplayMemory(object):
         if len(self.memory) < self.capacity:
             self.memory.append(None) # if we haven't reached full capacity, we append a new transition
         self.memory[self.position] = Transition(*args)  
+        self.position = (self.position + 1) % self.capacity # e.g if the capacity is 100, and our position is now 101, we don't append to
+        # position 101 (impossible), but to position 1 (its remainder), overwriting old data
+
+    def sample(self, batch_size):
+        return random.sample(self.memory, batch_size) 
+
+    def __len__(self): 
+        return len(self.memory)
+    
+class EnvMemory(object):
+
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.memory = []
+        self.position = 0
+
+    def push(self, *args):
+        """Saves a transition."""
+        if len(self.memory) < self.capacity:
+            self.memory.append(None) # if we haven't reached full capacity, we append a new transition
+        self.memory[self.position] = env_transition(*args)  
         self.position = (self.position + 1) % self.capacity # e.g if the capacity is 100, and our position is now 101, we don't append to
         # position 101 (impossible), but to position 1 (its remainder), overwriting old data
 
@@ -183,7 +205,7 @@ class D_AutoEncoder(nn.Module):
         self.tconv3 = nn.ConvTranspose2d(HIDDEN_LAYER_3, deconv_ch2, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,0])
         self.tconv2 = nn.ConvTranspose2d(deconv_ch2, deconv_ch1, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,1])
         self.tconv1 = nn.ConvTranspose2d(deconv_ch1, nn_inputs, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,0])
-        #self.env_vars_decode = nn.Linear(linear_input_size, )
+        self.reward_decode = nn.Linear(linear_input_size, n_env_vars)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
@@ -196,9 +218,10 @@ class D_AutoEncoder(nn.Module):
     
     def decode(self, z):
         z = F.leaky_relu(self.un_latentize(z), 0.2)
+        rw = self.reward_decode(z)
         z = F.leaky_relu(self.tconv3(z.view(z.size(0), -1, self.convh, self.convw)), 0.2)
         z = F.leaky_relu(self.tconv2(z), 0.2)
-        return torch.sigmoid(self.tconv1(z))
+        return torch.sigmoid(self.tconv1(z)), rw.view(-1, n_env_vars)
     
     def forward(self, x, a):
         z = self.encode(x)
@@ -259,6 +282,8 @@ print("Screen height: ", screen_height," | Width: ", screen_width)
 
 # Get number of actions from gym action space
 n_actions = env.action_space.n
+n_env_vars = 4
+
 
 steps_done = 0
 
@@ -337,16 +362,11 @@ def optimize_env_model():
     
     env_optim.defaults['lr'] = env_lr
     for _ in range(env_epochs):
-        """transitions = env_memory.sample(BATCH_SIZE)
+        transitions = env_memory.sample(BATCH_SIZE)
         # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
         # detailed explanation). This converts batch-array of Transitions
         # to Transition of batch-arrays.
-        batch = env_transition(*zip(*transitions))"""
-        transitions = memory.sample(BATCH_SIZE)
-        # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
-        # detailed explanation). This converts batch-array of Transitions
-        # to Transition of batch-arrays.
-        batch = Transition(*zip(*transitions))
+        batch = env_transition(*zip(*transitions))
 
         # Compute a mask of non-final states and concatenate the batch elements
         # (a final state would've been the one after which simulation ended)
@@ -357,13 +377,13 @@ def optimize_env_model():
         # torch.cat concatenates tensor sequence
         state_batch = torch.cat(batch.state)
         action_batch = torch.cat(batch.action)
-        """state_var_batch = torch.cat(batch.state_vars)
+        reward_batch = torch.cat(batch.reward)
+        state_variable_batch = torch.cat(batch.state_vars)
 
-
-        predicted_next_states, predicted_vars = env_net(state_batch[non_final_mask], action_batch[non_final_mask])#.detach()"""
-        predicted_next_states = env_net(state_batch[non_final_mask], action_batch[non_final_mask])#.detach()
+        predicted_next_states, predicted_vars = env_net(state_batch[non_final_mask], action_batch[non_final_mask])
 
         loss = F.mse_loss(predicted_next_states, non_final_next_states)
+        loss += env_loss_ratio*F.mse_loss(predicted_vars, state_variable_batch[non_final_mask])
         env_optim.zero_grad()
         loss.backward()
         env_optim.step()
@@ -371,7 +391,13 @@ def optimize_env_model():
 
     #print(torch.max(non_final_next_states), torch.min(non_final_next_states))
     if i_episode%50==0:
-        pic_id = randint(0, predicted_next_states.shape[0])
+        pic_id = randint(0, predicted_next_states.shape[0]-1)
+        x = predicted_vars[pic_id,0].item()
+        theta = predicted_vars[pic_id,2].item()
+        r1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
+        r2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
+        rw = r1 + r2
+
         fig, ax = plt.subplots(2,2)
         if GRAYSCALE == 0:
             ax[0,0].imshow(predicted_next_states[pic_id,0].cpu().numpy(),
@@ -399,7 +425,7 @@ def optimize_env_model():
             ax[1,1].imshow(non_final_next_states[pic_id,1].detach().cpu().numpy(), 
                     cmap='gray')
             ax[1,1].set_title("real1")
-        fig.suptitle('Example predicted screen')
+        fig.suptitle(f'Rewards: real:{reward_batch[non_final_mask][pic_id].round(decimals=4)}, fake: {round(rw,4)}')
         fig.savefig(f"project_exp_figs/screen{j}_{i_episode}.png")
         plt.close(fig)
     #plt.show()
@@ -426,7 +452,7 @@ for j in range(runs):
     optimizer = optim.RMSprop(policy_net.parameters())
     memory = ReplayMemory(MEMORY_SIZE)
 
-    env_memory = ReplayMemory(MEMORY_SIZE)
+    env_memory = EnvMemory(MEMORY_SIZE)
     env_optim = optim.Adam(env_net.parameters(), env_lr)
     fake_memory = ReplayMemory(MEMORY_SIZE)
     
@@ -472,16 +498,18 @@ for j in range(runs):
 
             # Store the transition in memory
             memory.push(state, action, next_state, reward)
+            state_variables=torch.tensor(state_variables, device=device).view(-1,4)
+            env_memory.push(state, action, next_state, reward, state_variables)
 
 
             # Move to the next state
             state = next_state
             #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fake~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            """if not done:
+            if not done:
                 # Select and perform an action
-                fake_action = select_action(fake_state, stop_training)
+                fake_action = select_action(state, stop_training)
 
-                fake_screen = env_net(fake_state, fake_action)
+                fake_screen, fake_state_vars = env_net(state, fake_action)
                 #print(fake_screen.shape, screens[-1].shape)
                 # Observe new state
                 fake_screens.append(fake_screen[:,0,:,:].view(1,1,60,135))
@@ -489,11 +517,12 @@ for j in range(runs):
                 fake_next_state = torch.cat(list(fake_screens), dim=1) if not done else None
 
                 # Reward modification for better stability
-                x, x_dot, theta, theta_dot = state_variables
-                r1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
-                r2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
+                x = fake_state_vars[:,0]
+                theta = fake_state_vars[:,2]
+                r1 = (env.x_threshold - torch.abs(x)) / env.x_threshold - 0.8
+                r2 = (env.theta_threshold_radians - torch.abs(theta)) / env.theta_threshold_radians - 0.5
                 reward = r1 + r2
-                reward = torch.tensor([reward], device=device)
+                #reward = torch.tensor([reward], device=device)
                 if t >= END_SCORE-1:
                     reward = reward + 20
                     done = 1
@@ -502,11 +531,8 @@ for j in range(runs):
                         reward = reward - 20 
 
                 # Store the transition in memory
-                memory.push(state, action, next_state, reward)
-                env_memory.push(state, action, next_state, state_variables)
+                fake_memory.push(fake_state, fake_action, fake_next_state, reward)
 
-                # Move to the next state
-                state = next_state"""
             #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~process~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
             # Perform one step of the optimization (on the target network)
