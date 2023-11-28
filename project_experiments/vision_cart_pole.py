@@ -14,6 +14,7 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 from collections import deque
 from tqdm import tqdm
+import vdp
 import os, shutil
 from random import randint
 folder = 'project_exp_figs'
@@ -184,12 +185,12 @@ class D_AutoEncoder(nn.Module):
 
     def __init__(self, h, w, latent_dim, actions, action_latents):#""", state_vars):"""
         super(D_AutoEncoder, self).__init__()
-        self.conv1 = nn.Conv2d(nn_inputs, HIDDEN_LAYER_1, kernel_size=KERNEL_SIZE, stride=STRIDE) 
-        self.bn1 = nn.BatchNorm2d(HIDDEN_LAYER_1)
-        self.conv2 = nn.Conv2d(HIDDEN_LAYER_1, HIDDEN_LAYER_2, kernel_size=KERNEL_SIZE, stride=STRIDE)
-        self.bn2 = nn.BatchNorm2d(HIDDEN_LAYER_2)
-        self.conv3 = nn.Conv2d(HIDDEN_LAYER_2, HIDDEN_LAYER_3, kernel_size=KERNEL_SIZE, stride=STRIDE)
-        self.bn3 = nn.BatchNorm2d(HIDDEN_LAYER_3)
+        self.conv1 = vdp.Conv2d(nn_inputs, HIDDEN_LAYER_1, kernel_size=KERNEL_SIZE, stride=STRIDE) 
+        self.bn1 = vdp.BatchNorm2d(HIDDEN_LAYER_1)
+        self.conv2 = vdp.Conv2d(HIDDEN_LAYER_1, HIDDEN_LAYER_2, kernel_size=KERNEL_SIZE, stride=STRIDE)
+        self.bn2 = vdp.BatchNorm2d(HIDDEN_LAYER_2)
+        self.conv3 = vdp.Conv2d(HIDDEN_LAYER_2, HIDDEN_LAYER_3, kernel_size=KERNEL_SIZE, stride=STRIDE)
+        self.bn3 = vdp.BatchNorm2d(HIDDEN_LAYER_3)
         # Number of Linear input connections depends on output of conv2d layers
         # and therefore the input image size, so compute it.
         def conv2d_size_out(size, kernel_size = KERNEL_SIZE, stride = STRIDE):
@@ -200,14 +201,14 @@ class D_AutoEncoder(nn.Module):
         self.convh = convh
         self.convw = convw
         nn.Dropout()
-        self.latent_mu = nn.Linear(linear_input_size, latent_dim)
-        self.latent_sigma = nn.Linear(linear_input_size, latent_dim)
-        self.action_encode = nn.Linear(actions, action_latents)
-        self.un_latentize = nn.Linear(latent_dim + action_latents, linear_input_size)
-        self.tconv3 = nn.ConvTranspose2d(HIDDEN_LAYER_3, deconv_ch2, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,0])
-        self.tconv2 = nn.ConvTranspose2d(deconv_ch2, deconv_ch1, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,1])
-        self.tconv1 = nn.ConvTranspose2d(deconv_ch1, nn_inputs, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,0])
-        self.reward_decode = nn.Linear(linear_input_size, n_env_vars)
+        self.latent_mu = vdp.Linear(linear_input_size, latent_dim)
+        self.latent_sigma = vdp.Linear(linear_input_size, latent_dim)
+        self.action_encode = vdp.Linear(actions, action_latents)
+        self.un_latentize = vdp.Linear(latent_dim + action_latents, linear_input_size)
+        self.tconv3 = vdp.ConvTranspose2d(HIDDEN_LAYER_3, deconv_ch2, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,0])
+        self.tconv2 = vdp.ConvTranspose2d(deconv_ch2, deconv_ch1, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,1])
+        self.tconv1 = vdp.ConvTranspose2d(deconv_ch1, nn_inputs, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,0])
+        self.reward_decode = vdp.Linear(linear_input_size, n_env_vars)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
