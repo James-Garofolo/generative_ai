@@ -3,3 +3,4 @@ small_test.py
 __pycache__/
 wandb/
 project_exp_figs
+vdp.py
