@@ -381,7 +381,56 @@ def optimize_model():
         param.grad.data.clamp_(-1, 1)
     optimizer.step()
 
-# Training 
+def optimize_model_with_fake_data():
+    if (len(memory) < BATCH_SIZE) or (len(fake_memory) < BATCH_SIZE):
+        return
+    transitions = memory.sample(BATCH_SIZE)
+    fake_transitions = fake_memory.sample(BATCH_SIZE)
+    # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
+    # detailed explanation). This converts batch-array of Transitions
+    # to Transition of batch-arrays.
+    batch = Transition(*zip(*transitions))
+    fake_batch = Transition(*zip(*fake_transitions))
+
+    # Compute a mask of non-final states and concatenate the batch elements
+    # (a final state would've been the one after which simulation ended)
+    non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+                                          batch.next_state)), device=device, dtype=torch.bool)
+    non_final_next_states = torch.cat([s for s in batch.next_state
+                                                if s is not None])
+    # torch.cat concatenates tensor sequence
+    state_batch = torch.cat(batch.state)
+    action_batch = torch.cat(batch.action)
+    reward_batch = torch.cat(batch.reward).type(torch.FloatTensor).to(device)
+
+    # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
+    # columns of actions taken. These are the actions which would've been taken
+    # for each batch state according to policy_net
+    state_action_values = policy_net(state_batch).gather(1, action_batch)
+
+    # Compute V(s_{t+1}) for all next states.
+    # Expected values of actions for non_final_next_states are computed based
+    # on the "older" target_net; selecting their best reward with max(1)[0].
+    # This is merged based on the mask, such that we'll have either the expected
+    # state value or 0 in case the state was final.
+    next_state_values = torch.zeros(BATCH_SIZE, device=device)
+    next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0].detach()
+    # Compute the expected Q values
+    expected_state_action_values = (next_state_values * GAMMA) + reward_batch
+
+    # Compute Huber loss
+    loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
+    #plt.figure(2)
+
+    #wandb.log({'Loss:': loss})
+
+    # Optimize the model
+    optimizer.zero_grad()
+    loss.backward()
+    for param in policy_net.parameters():
+        param.grad.data.clamp_(-1, 1)
+    optimizer.step()
+
 def optimize_env_model():
     if len(memory) < BATCH_SIZE:
         return
@@ -546,37 +595,46 @@ for j in range(runs):
             env_memory.push(state, action, next_state, reward, state_variables)
 
             #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fake~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            if not done:
+            """if not done:
                 # Select and perform an action
                 #fake_action = select_action(state, stop_training)
 
-                """fake_screen, screen_sigma, fake_vars, var_sigma = env_net(state, action)
+                fake_screen, screen_sigma, fake_vars, var_sigma = env_net(state, action)
                 total_sigma = torch.cat([screen_sigma.view(-1), var_sigma.view(-1)]).sum()
                 k_star = torch.floor(torch.clip(3-total_sigma, 0, 6))
                 if (i_episode > 5) and (t%50==0):
                     print("variance stuff:\n",total_sigma, k_star)
                 #print(fake_screen.shape, screens[-1].shape)
-                # Observe new state
-                fake_screens.append(fake_screen[:,0,:,:].view(1,1,60,135))
                 
-                fake_next_state = torch.cat(list(fake_screens), dim=1) if not done else None
-                
-                # Reward modification for better stability
-                x = fake_vars[:,0]
-                theta = fake_vars[:,2]
-                r1 = (env.x_threshold - torch.abs(x)) / env.x_threshold - 0.8
-                r2 = (env.theta_threshold_radians - torch.abs(theta)) / env.theta_threshold_radians - 0.5
-                reward = r1 + r2
-                #reward = torch.tensor([reward], device=device)
-                if t >= END_SCORE-1:
-                    reward = reward + 20
-                    done = 1
-                else: 
-                    if done:
-                        reward = reward - 20 
+                fake_action = action
+                for k in range(k_star):
+                    fake_screens.append(fake_screen[:,0,:,:].view(1,1,60,135))
+                    
+                    fake_next_state = torch.cat(list(fake_screens), dim=1) #if not done else None
+                    
+                    # Reward modification for better stability
+                    x = fake_vars[:,0]
+                    theta = fake_vars[:,2]
+                    r1 = (env.x_threshold - torch.abs(x)) / env.x_threshold - 0.8
+                    r2 = (env.theta_threshold_radians - torch.abs(theta)) / env.theta_threshold_radians - 0.5
+                    reward = r1 + r2
+                    #reward = torch.tensor([reward], device=device)
+                    if t >= END_SCORE-1:
+                        reward = reward + 20
+                        done = 1
+                    else: 
+                        if done:
+                            reward = reward - 20 
 
-                # Store the transition in memory
-                fake_memory.push(fake_state, fake_action, fake_next_state, reward)"""
+                    # Store the transition in memory
+                    fake_memory.push(fake_state, fake_action, fake_next_state, reward)
+
+                    fake_state = fake_next_state
+                    fake_action = select_action(fake_state, stop_training)
+                    fake_screen, _, fake_vars, _ = env_net(fake_state, fake_action)"""
+
+
+
 
             #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~process~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
