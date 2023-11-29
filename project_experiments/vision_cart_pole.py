@@ -36,8 +36,8 @@ for filename in os.listdir(folder):
 BATCH_SIZE = 128 # original = 128
 #env_batch_size = 256
 env_epochs = 10#30
-env_loss_ratio = 0.005 # recon_loss = img_loss + env_loss_ratio*reward_loss
-kl_ratio = 0.00005 # loss = recon_loss + kl_ratio+kl_dif_loss
+env_loss_ratio = 0.05 # recon_loss = img_loss + env_loss_ratio*reward_loss
+kl_ratio = 0.05 # loss = recon_loss + kl_ratio+kl_dif_loss
 env_lr = 0.005
 env_decay = 0.95
 GAMMA = 0.999 # original = 0.999
@@ -462,10 +462,10 @@ def optimize_env_model():
         #loss = F.smooth_l1_loss(predicted_next_states, non_final_next_states)
         #loss += env_loss_ratio*F.smooth_l1_loss(predicted_vars, state_variable_batch[non_final_mask])
         loss = -torch.distributions.normal.Normal(predicted_next_states, 
-                                vdp.softplus(scr_sigma)).log_prob(non_final_next_states).mean()
+                                vdp.softplus(scr_sigma)).log_prob(non_final_next_states).sum()
         #print(loss.item())
         loss += -env_loss_ratio*torch.distributions.normal.Normal(predicted_vars, 
-                                vdp.softplus(sv_sigma)).log_prob(state_variable_batch[non_final_mask]).mean()
+                                vdp.softplus(sv_sigma)).log_prob(state_variable_batch[non_final_mask]).sum()
         #print(loss.item())
         loss += kl_ratio*env_net.get_kl()
         #print("a",loss.item())
