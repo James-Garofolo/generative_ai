@@ -541,24 +541,25 @@ for j in range(runs):
             state_variables=torch.tensor(state_variables, device=device).view(-1,4)
             env_memory.push(state, action, next_state, reward, state_variables)
 
-
-            # Move to the next state
-            state = next_state
             #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fake~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            """if not done:
+            if not done:
                 # Select and perform an action
-                fake_action = select_action(state, stop_training)
+                #fake_action = select_action(state, stop_training)
 
-                fake_screen, fake_state_vars, _, _ = env_net(state, fake_action)
+                fake_screen, screen_sigma, fake_vars, var_sigma = env_net(state, action)
+                total_sigma = torch.cat([screen_sigma.view(-1), var_sigma.view(-1)]).sum()
+                k_star = torch.floor(torch.clip(3-total_sigma, 0, 6))
+                if (i_episode > 5) and (t%50==0):
+                    print("variance stuff:\n",total_sigma, k_star)
                 #print(fake_screen.shape, screens[-1].shape)
                 # Observe new state
-                fake_screens.append(fake_screen[:,0,:,:].view(1,1,60,135))
+                """fake_screens.append(fake_screen[:,0,:,:].view(1,1,60,135))
                 
                 fake_next_state = torch.cat(list(fake_screens), dim=1) if not done else None
                 
                 # Reward modification for better stability
-                x = fake_state_vars[:,0]
-                theta = fake_state_vars[:,2]
+                x = fake_vars[:,0]
+                theta = fake_vars[:,2]
                 r1 = (env.x_threshold - torch.abs(x)) / env.x_threshold - 0.8
                 r2 = (env.theta_threshold_radians - torch.abs(theta)) / env.theta_threshold_radians - 0.5
                 reward = r1 + r2
@@ -575,6 +576,8 @@ for j in range(runs):
 
             #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~process~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+            # Move to the next state
+            state = next_state
             # Perform one step of the optimization (on the target network)
             if done:
                 episode_durations.append(t + 1)
