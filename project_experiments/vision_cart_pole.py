@@ -430,13 +430,16 @@ def optimize_env_model():
         env_optim.defaults['lr'] *= env_decay
 
     #print(torch.max(non_final_next_states), torch.min(non_final_next_states))
-    if i_episode%50==0:
+    if i_episode%25==0:
         pic_id = randint(0, predicted_next_states.shape[0]-1)
         x = predicted_vars[pic_id,0].item()
         theta = predicted_vars[pic_id,2].item()
         r1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
         r2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
         rw = r1 + r2
+
+        total_sigma = torch.cat([scr_sigma[pic_id].view(-1), sv_sigma[pic_id].view(-1)]).sum()
+        #k_star = torch.floor(torch.clip(3-total_sigma, 0, 6))
 
         fig, ax = plt.subplots(2,2)
         if GRAYSCALE == 0:
@@ -465,7 +468,8 @@ def optimize_env_model():
             ax[1,1].imshow(non_final_next_states[pic_id,1].detach().cpu().numpy(), 
                     cmap='gray')
             ax[1,1].set_title("real1")
-        fig.suptitle(f'Rewards: real:{reward_batch[non_final_mask][pic_id].round(decimals=4)}, fake: {round(rw,4)}')
+        fig.suptitle(
+            f'Rewards: real:{reward_batch[non_final_mask][pic_id].round(decimals=4)}, fake: {round(rw,4)}\nvariance: {total_sigma}')
         fig.savefig(f"project_exp_figs/screen{j}_{i_episode}.png")
         plt.close(fig)
     #plt.show()
@@ -546,14 +550,14 @@ for j in range(runs):
                 # Select and perform an action
                 #fake_action = select_action(state, stop_training)
 
-                fake_screen, screen_sigma, fake_vars, var_sigma = env_net(state, action)
+                """fake_screen, screen_sigma, fake_vars, var_sigma = env_net(state, action)
                 total_sigma = torch.cat([screen_sigma.view(-1), var_sigma.view(-1)]).sum()
                 k_star = torch.floor(torch.clip(3-total_sigma, 0, 6))
                 if (i_episode > 5) and (t%50==0):
                     print("variance stuff:\n",total_sigma, k_star)
                 #print(fake_screen.shape, screens[-1].shape)
                 # Observe new state
-                """fake_screens.append(fake_screen[:,0,:,:].view(1,1,60,135))
+                fake_screens.append(fake_screen[:,0,:,:].view(1,1,60,135))
                 
                 fake_next_state = torch.cat(list(fake_screens), dim=1) if not done else None
                 
