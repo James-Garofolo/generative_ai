@@ -504,7 +504,7 @@ def optimize_env_model():
         r2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
         rw = r1 + r2
 
-        total_sigma = torch.cat([scr_sigma[pic_id].view(-1), sv_sigma[pic_id].view(-1)]).sum()
+        total_sigma = scr_sigma[pic_id].mean() + sv_sigma[pic_id].view(-1).mean()
         #k_star = torch.floor(torch.clip(3-total_sigma, 0, 6))
 
         fig, ax = plt.subplots(2,2)
