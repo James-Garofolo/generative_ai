@@ -36,7 +36,7 @@ for filename in os.listdir(folder):
 BATCH_SIZE = 128 # original = 128
 #env_batch_size = 256
 env_epochs = 10#30
-env_loss_ratio = 0.05 # recon_loss = img_loss + env_loss_ratio*reward_loss
+env_loss_ratio = 0.5 # recon_loss = img_loss + env_loss_ratio*reward_loss
 kl_ratio = 0.05 # loss = recon_loss + kl_ratio+kl_dif_loss
 env_lr = 0.005
 env_decay = 0.95
@@ -403,10 +403,15 @@ def optimize_model_with_fake_data():
     action_batch = torch.cat(batch.action)
     reward_batch = torch.cat(batch.reward).type(torch.FloatTensor).to(device)
 
+    fake_next_states = torch.cat(fake_batch.next_state)
+    fake_state_batch = torch.cat(fake_batch.state)
+    fake_action_batch = torch.cat(fake_batch.action)
+    fake_reward_batch = torch.cat(fake_batch.reward).type(torch.FloatTensor).to(device)
+
     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
     # columns of actions taken. These are the actions which would've been taken
     # for each batch state according to policy_net
-    state_action_values = policy_net(state_batch).gather(1, action_batch)
+    state_action_values = bd_policy_net(state_batch).gather(1, action_batch)
 
     # Compute V(s_{t+1}) for all next states.
     # Expected values of actions for non_final_next_states are computed based
@@ -414,12 +419,24 @@ def optimize_model_with_fake_data():
     # This is merged based on the mask, such that we'll have either the expected
     # state value or 0 in case the state was final.
     next_state_values = torch.zeros(BATCH_SIZE, device=device)
-    next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0].detach()
+    next_state_values[non_final_mask] = bd_target_net(non_final_next_states).max(1)[0].detach()
     # Compute the expected Q values
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
 
     # Compute Huber loss
     loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
+
+    
+    fake_state_action_values = bd_policy_net(fake_state_batch).gather(1, fake_action_batch)
+
+    fake_next_state_values = torch.zeros(BATCH_SIZE, device=device)
+    fake_next_state_values = bd_target_net(fake_next_states).max(1)[0].detach()
+    # Compute the expected Q values
+    fake_expected_state_action_values = (fake_next_state_values * GAMMA) + fake_reward_batch
+
+    # Compute Huber loss
+    loss += F.smooth_l1_loss(fake_state_action_values, fake_expected_state_action_values.unsqueeze(1))
+    
     #plt.figure(2)
 
     #wandb.log({'Loss:': loss})
@@ -541,6 +558,11 @@ for j in range(runs):
     env_net = D_AutoEncoder(screen_height, screen_width, latent_dims, n_actions, action_latents).to(device)
     target_net.load_state_dict(policy_net.state_dict())
     target_net.eval()
+    
+    bd_policy_net = DQN(screen_height, screen_width, n_actions).to(device)
+    bd_target_net = DQN(screen_height, screen_width, n_actions).to(device)
+    bd_target_net.load_state_dict(policy_net.state_dict())
+    bd_target_net.eval()
 
     optimizer = optim.RMSprop(policy_net.parameters())
     memory = ReplayMemory(MEMORY_SIZE)
