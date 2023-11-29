@@ -35,10 +35,10 @@ for filename in os.listdir(folder):
 ############ HYPERPARAMETERS ##############
 BATCH_SIZE = 128 # original = 128
 #env_batch_size = 256
-env_epochs = 30
-env_loss_ratio = 0.5 # recon_loss = img_loss + env_loss_ratio*reward_loss
-kl_ratio = 0.01 # loss = recon_loss + kl_ratio+kl_dif_loss
-env_lr = 0.0009
+env_epochs = 10#30
+env_loss_ratio = 0.005 # recon_loss = img_loss + env_loss_ratio*reward_loss
+kl_ratio = 0.00005 # loss = recon_loss + kl_ratio+kl_dif_loss
+env_lr = 0.005
 env_decay = 0.95
 GAMMA = 0.999 # original = 0.999
 EPS_START = 0.9 # original = 0.9
@@ -185,7 +185,7 @@ class D_AutoEncoder(nn.Module):
 
     def __init__(self, h, w, latent_dim, actions, action_latents):#""", state_vars):"""
         super(D_AutoEncoder, self).__init__()
-        self.conv1 = vdp.Conv2d(nn_inputs, HIDDEN_LAYER_1, kernel_size=KERNEL_SIZE, stride=STRIDE) 
+        self.conv1 = vdp.Conv2d(nn_inputs, HIDDEN_LAYER_1, kernel_size=KERNEL_SIZE, stride=STRIDE, input_flag=True) 
         self.bn1 = vdp.BatchNorm2d(HIDDEN_LAYER_1)
         self.conv2 = vdp.Conv2d(HIDDEN_LAYER_1, HIDDEN_LAYER_2, kernel_size=KERNEL_SIZE, stride=STRIDE)
         self.bn2 = vdp.BatchNorm2d(HIDDEN_LAYER_2)
@@ -201,46 +201,59 @@ class D_AutoEncoder(nn.Module):
         self.convh = convh
         self.convw = convw
         nn.Dropout()
-        self.latent_mu = vdp.Linear(linear_input_size, latent_dim)
-        self.latent_sigma = vdp.Linear(linear_input_size, latent_dim)
-        self.action_encode = vdp.Linear(actions, action_latents)
+        self.latentize = vdp.Linear(linear_input_size, latent_dim)
+        #self.latent_mu = vdp.Linear(linear_input_size, latent_dim)
+        #self.latent_sigma = vdp.Linear(linear_input_size, latent_dim)
+        self.action_encode = vdp.Linear(actions, action_latents, input_flag=True)
         self.un_latentize = vdp.Linear(latent_dim + action_latents, linear_input_size)
         self.tconv3 = vdp.ConvTranspose2d(HIDDEN_LAYER_3, deconv_ch2, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,0])
         self.tconv2 = vdp.ConvTranspose2d(deconv_ch2, deconv_ch1, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,1])
         self.tconv1 = vdp.ConvTranspose2d(deconv_ch1, nn_inputs, kernel_size=KERNEL_SIZE, stride=STRIDE, output_padding=[1,0])
         self.reward_decode = vdp.Linear(linear_input_size, n_env_vars)
+        self.gelu = vdp.GELU()
+        self.sigmoid = vdp.Sigmoid()
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def encode(self, x):
         #print(x.shape)
-        x = F.leaky_relu(self.bn1(self.conv1(x)), 0.2)
-        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.2)
-        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.2)
-        mu = self.latent_mu(x.view(x.size(0), -1))
-        log_sigma = self.latent_sigma(x.view(x.size(0), -1))
-        return mu, log_sigma
+        mu, sigma = self.gelu(*self.bn1(*self.conv1(x)))
+        mu, sigma = self.gelu(*self.bn2(*self.conv2(mu, sigma)))
+        mu, sigma = self.gelu(*self.bn3(*self.conv3(mu, sigma)))
+        #mu = self.latent_mu(x.view(x.size(0), -1))
+        #log_sigma = self.latent_sigma(x.view(x.size(0), -1))
+        mu, sigma = self.latentize(mu.view(x.size(0), -1), sigma.view(x.size(0), -1))
+        return mu, sigma
     
     def reparemetrize(self, mu, sigma):
         epsilon = torch.randn_like(sigma).to(device)
         return mu + epsilon * sigma
 
 
-    def decode(self, z):
-        z = F.leaky_relu(self.un_latentize(z), 0.2)
-        rw = self.reward_decode(z)
-        z = F.leaky_relu(self.tconv3(z.view(z.size(0), -1, self.convh, self.convw)), 0.2)
-        z = F.leaky_relu(self.tconv2(z), 0.2)
-        return torch.sigmoid(self.tconv1(z)), rw.view(-1, n_env_vars)
+    def decode(self, mu, sigma):
+        mu, sigma = self.gelu(*self.un_latentize(mu, sigma))
+        r_mu, r_sigma = self.reward_decode(mu, sigma)
+        mu, sigma = self.gelu(*self.tconv3(mu.view(mu.size(0), -1, self.convh, self.convw), 
+                                   sigma.view(sigma.size(0), -1, self.convh, self.convw)))
+        mu, sigma = self.gelu(*self.tconv2(mu, sigma))
+        mu, sigma = self.tconv1(mu, sigma)
+        stuff = self.sigmoid(mu, sigma)
+        mu, sigma = stuff
+        
+        return mu, sigma, r_mu.view(-1, n_env_vars), r_sigma.view(-1, n_env_vars)
     
     def forward(self, x, a):
-        mu, log_sigma = self.encode(x)
-        z = self.reparemetrize(mu, torch.exp(0.5*log_sigma))
+        mu, sigma = self.encode(x)
+        #z = self.reparemetrize(mu, torch.exp(0.5*log_sigma))
         #z = mu
         a = torch.cat((a, torch.ones_like(a)-a), dim=1).float()
-        a = F.leaky_relu(self.action_encode(a))
-        screen, state_vars = self.decode(torch.cat((z, a), dim=1))
-        return screen, state_vars, mu, log_sigma
+        a_mu, a_sigma = self.gelu(*self.action_encode(a))
+        scr_mu, scr_sigma, sv_mu, sv_sigma = self.decode(torch.cat((mu, a_mu), dim=1), torch.cat((sigma, a_sigma), dim=1))
+        return scr_mu, scr_sigma, sv_mu, sv_sigma
+    
+    def get_kl(self):
+        return sum(vdp.gather_kl(self))
+    
     
 # Cart location for centering image crop
 def get_cart_location(screen_width):
@@ -393,13 +406,22 @@ def optimize_env_model():
         reward_batch = torch.cat(batch.reward)
         state_variable_batch = torch.cat(batch.state_vars)
 
-        predicted_next_states, predicted_vars, mu, log_sigma = env_net(state_batch[non_final_mask], \
+        predicted_next_states, scr_sigma, predicted_vars, sv_sigma = env_net(state_batch[non_final_mask], \
                                                                        action_batch[non_final_mask])
 
-        loss = F.smooth_l1_loss(predicted_next_states, non_final_next_states)
-        loss += env_loss_ratio*F.smooth_l1_loss(predicted_vars, state_variable_batch[non_final_mask])
-        #print("b",loss.item())
-        loss -= kl_ratio*0.5 * torch.sum(1+ log_sigma - mu.pow(2) - log_sigma.exp())
+        
+        #loss = F.smooth_l1_loss(predicted_next_states, non_final_next_states)
+        #loss += env_loss_ratio*F.smooth_l1_loss(predicted_vars, state_variable_batch[non_final_mask])
+        loss = -torch.distributions.normal.Normal(predicted_next_states, 
+                                vdp.softplus(scr_sigma)).log_prob(non_final_next_states).mean()
+        #print(loss.item())
+        loss += -env_loss_ratio*torch.distributions.normal.Normal(predicted_vars, 
+                                vdp.softplus(sv_sigma)).log_prob(state_variable_batch[non_final_mask]).mean()
+        #print(loss.item())
+        loss += kl_ratio*env_net.get_kl()
+        #print("a",loss.item())
+        
+        #loss -= kl_ratio*0.5 * torch.sum(1+ log_sigma - mu.pow(2) - log_sigma.exp())
         #print("a",loss.item())
         
         env_optim.zero_grad()
@@ -455,7 +477,7 @@ episodes_trajectories = []
 vae_losses = []
 episodes_after_stop = 100
 
-runs = 2
+runs = 5
 
 # MAIN LOOP
 stop_training = False
