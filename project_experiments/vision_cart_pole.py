@@ -35,17 +35,17 @@ for filename in os.listdir(folder):
 ############ HYPERPARAMETERS ##############
 BATCH_SIZE = 128 # original = 128
 #env_batch_size = 256
-env_epochs = 10#30
+env_epochs = 30#30
 env_loss_ratio = 0.5 # recon_loss = img_loss + env_loss_ratio*reward_loss
 kl_ratio = 0.05 # loss = recon_loss + kl_ratio+kl_dif_loss
-env_lr = 0.01
-env_decay = 0.95
+env_lr = 0.001
+env_decay = 0.99
 GAMMA = 0.999 # original = 0.999
 EPS_START = 0.9 # original = 0.9
 EPS_END = 0.01 # original = 0.05
 EPS_DECAY = 3000 # original = 200
 TARGET_UPDATE = 50 # original = 10
-MEMORY_SIZE = 100000 # original = 10000
+MEMORY_SIZE = 50000 # original = 10000
 END_SCORE = 200 # 200 for Cartpole-v0
 TRAINING_STOP = 142 # threshold for training stop
 N_EPISODES = 50000 # total episodes to be run
@@ -399,76 +399,86 @@ def optimize_model():
     optimizer.step()
 
 def optimize_model_with_fake_data():
-    if (len(bd_memory) < BATCH_SIZE) or (len(fake_memory) < BATCH_SIZE):
+    if (len(bd_memory) < BATCH_SIZE) and (len(fake_memory) < BATCH_SIZE):
         return
-    transitions = bd_memory.sample(BATCH_SIZE)
-    fake_transitions = fake_memory.sample(BATCH_SIZE)
-    # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
-    # detailed explanation). This converts batch-array of Transitions
-    # to Transition of batch-arrays.
-    batch = Transition(*zip(*transitions))
-    fake_batch = Transition(*zip(*fake_transitions))
 
-    # Compute a mask of non-final states and concatenate the batch elements
-    # (a final state would've been the one after which simulation ended)
-    non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                          batch.next_state)), device=device, dtype=torch.bool)
-    non_final_next_states = torch.cat([s for s in batch.next_state
-                                                if s is not None])
-    # torch.cat concatenates tensor sequence
-    state_batch = torch.cat(batch.state)
-    action_batch = torch.cat(batch.action)
-    reward_batch = torch.cat(batch.reward).type(torch.FloatTensor).to(device)
+    if  (len(fake_memory) >= BATCH_SIZE):
+        fake_transitions = fake_memory.sample(BATCH_SIZE)
 
-    fake_next_states = torch.cat(fake_batch.next_state)
-    fake_state_batch = torch.cat(fake_batch.state)
-    fake_action_batch = torch.cat(fake_batch.action)
-    fake_reward_batch = torch.cat(fake_batch.reward).type(torch.FloatTensor).to(device)
+        fake_batch = Transition(*zip(*fake_transitions))
 
-    # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
-    # columns of actions taken. These are the actions which would've been taken
-    # for each batch state according to policy_net
-    state_action_values = bd_policy_net(state_batch).gather(1, action_batch)
+        fake_next_states = torch.cat(fake_batch.next_state)
+        fake_state_batch = torch.cat(fake_batch.state)
+        fake_action_batch = torch.cat(fake_batch.action)
+        fake_reward_batch = torch.cat(fake_batch.reward).type(torch.FloatTensor).to(device)
 
-    # Compute V(s_{t+1}) for all next states.
-    # Expected values of actions for non_final_next_states are computed based
-    # on the "older" target_net; selecting their best reward with max(1)[0].
-    # This is merged based on the mask, such that we'll have either the expected
-    # state value or 0 in case the state was final.
-    next_state_values = torch.zeros(BATCH_SIZE, device=device)
-    next_state_values[non_final_mask] = bd_target_net(non_final_next_states).max(1)[0].detach()
-    # Compute the expected Q values
-    expected_state_action_values = (next_state_values * GAMMA) + reward_batch
+        
+        fake_state_action_values = bd_policy_net(fake_state_batch).gather(1, fake_action_batch)
 
-    # Compute Huber loss
-    loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
+        fake_next_state_values = torch.zeros(BATCH_SIZE, device=device)
+        fake_next_state_values = bd_target_net(fake_next_states).max(1)[0].detach()
+        # Compute the expected Q values
+        fake_expected_state_action_values = (fake_next_state_values * GAMMA) + fake_reward_batch
+
+        # Compute Huber loss
+        bd_loss = F.smooth_l1_loss(fake_state_action_values, fake_expected_state_action_values.unsqueeze(1))
+        # Optimize the model
+        bd_optim.zero_grad()
+        bd_loss.backward()
+        for param in bd_policy_net.parameters():
+            param.grad.data.clamp_(-1, 1)
+        bd_optim.step()
+
+    if (len(bd_memory) >= BATCH_SIZE):
+        transitions = bd_memory.sample(BATCH_SIZE)
+        # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
+        # detailed explanation). This converts batch-array of Transitions
+        # to Transition of batch-arrays.
+        batch = Transition(*zip(*transitions))
+
+        # Compute a mask of non-final states and concatenate the batch elements
+        # (a final state would've been the one after which simulation ended)
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+                                            batch.next_state)), device=device, dtype=torch.bool)
+        non_final_next_states = torch.cat([s for s in batch.next_state
+                                                    if s is not None])
+        # torch.cat concatenates tensor sequence
+        state_batch = torch.cat(batch.state)
+        action_batch = torch.cat(batch.action)
+        reward_batch = torch.cat(batch.reward).type(torch.FloatTensor).to(device)
+
+        # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
+        # columns of actions taken. These are the actions which would've been taken
+        # for each batch state according to policy_net
+        state_action_values = bd_policy_net(state_batch).gather(1, action_batch)
+
+        # Compute V(s_{t+1}) for all next states.
+        # Expected values of actions for non_final_next_states are computed based
+        # on the "older" target_net; selecting their best reward with max(1)[0].
+        # This is merged based on the mask, such that we'll have either the expected
+        # state value or 0 in case the state was final.
+        next_state_values = torch.zeros(BATCH_SIZE, device=device)
+        next_state_values[non_final_mask] = bd_target_net(non_final_next_states).max(1)[0].detach()
+        # Compute the expected Q values
+        expected_state_action_values = (next_state_values * GAMMA) + reward_batch
+
+        # Compute Huber loss
+        bd_loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
+        # Optimize the model
+        bd_optim.zero_grad()
+        bd_loss.backward()
+        for param in bd_policy_net.parameters():
+            param.grad.data.clamp_(-1, 1)
+        bd_optim.step()
 
     
-    fake_state_action_values = bd_policy_net(fake_state_batch).gather(1, fake_action_batch)
-
-    fake_next_state_values = torch.zeros(BATCH_SIZE, device=device)
-    fake_next_state_values = bd_target_net(fake_next_states).max(1)[0].detach()
-    # Compute the expected Q values
-    fake_expected_state_action_values = (fake_next_state_values * GAMMA) + fake_reward_batch
-
-    # Compute Huber loss
-    loss += F.smooth_l1_loss(fake_state_action_values, fake_expected_state_action_values.unsqueeze(1))
-    
-    #plt.figure(2)
-
-    #wandb.log({'Loss:': loss})
-
-    # Optimize the model
-    optimizer.zero_grad()
-    loss.backward()
-    for param in policy_net.parameters():
-        param.grad.data.clamp_(-1, 1)
-    optimizer.step()
 
 def optimize_env_model():
     if len(env_memory) < BATCH_SIZE:
         return
     
+    env_net.train()
+
     env_optim.defaults['lr'] = env_lr
     for _ in range(env_epochs):
         transitions = env_memory.sample(BATCH_SIZE)
@@ -513,7 +523,7 @@ def optimize_env_model():
         env_optim.defaults['lr'] *= env_decay
 
     #print(torch.max(non_final_next_states), torch.min(non_final_next_states))
-    if i_episode%25==0:
+    if (i_episode%25==0):
         pic_id = randint(0, predicted_next_states.shape[0]-1)
         x = predicted_vars[pic_id,0].item()
         theta = predicted_vars[pic_id,2].item()
@@ -522,7 +532,7 @@ def optimize_env_model():
         rw = r1 + r2
 
         tot_sigma = scr_sigma[pic_id].mean() + sv_sigma[pic_id].mean()
-        k_s = torch.floor(torch.clip(7-50*total_sigma, 0, 6)).item()
+        k_s = torch.floor(torch.clip(7-50*total_sigma, 0, 3)).item()
 
         fig, ax = plt.subplots(2,2)
         if GRAYSCALE == 0:
@@ -569,7 +579,7 @@ episodes_after_stop = 100
 runs = 5
 
 # MAIN LOOP
-stop_training = False
+stop_training = True
 bd_stop_training = False
 for j in range(runs):
     mean_last = deque([0] * LAST_EPISODES_NUM, LAST_EPISODES_NUM)
@@ -604,7 +614,7 @@ for j in range(runs):
     
     for i_episode in tqdm(range(N_EPISODES)):
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~real~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        if not stop_training:
+        """if not stop_training:
             env.reset()
             init_screen = get_screen()
             screens = deque([init_screen] * FRAMES, FRAMES)
@@ -651,7 +661,7 @@ for j in range(runs):
                         
                     else:
                         stop_training = True
-                    break
+                    break"""
 
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~both data types~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
         if not bd_stop_training:
@@ -694,11 +704,11 @@ for j in range(runs):
                 if not done:
                     # Select and perform an action
                     #fake_action = select_action(state, stop_training)
-
+                    env_net.eval()
                     fake_screen, screen_sigma, fake_vars, var_sigma = env_net(state, action)
                     total_sigma = screen_sigma.mean() + var_sigma.mean()
                     
-                    k_star = int(torch.floor(torch.clip(7-50*total_sigma, 0, 6)).item())
+                    k_star = int(torch.floor(torch.clip(7-50*total_sigma, 0, 3)).item())
                     
                     #print(fake_screen.shape, screens[-1].shape)
                     
@@ -723,7 +733,8 @@ for j in range(runs):
                                 reward = reward - 20 
 
                         # Store the transition in memory
-                        fake_memory.push(fake_state, fake_action, fake_next_state, reward)
+                        fake_memory.push(fake_state.detach(), fake_action.detach(), 
+                                         fake_next_state.detach(), reward.detach())
 
                         fake_state = fake_next_state
                         fake_action = select_action(fake_state, stop_training)
@@ -746,6 +757,7 @@ for j in range(runs):
                         
                     else:
                         bd_stop_training = True
+                        print("bd boy did it")
                     break
 
 
