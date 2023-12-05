@@ -398,6 +398,9 @@ def optimize_model():
         param.grad.data.clamp_(-1, 1)
     optimizer.step()
 
+    if (i_episode%50==0):
+        print(f"regular score: {episode_durations[-1]}")
+
 def optimize_model_with_fake_data():
     if (len(bd_memory) < BATCH_SIZE) and (len(fake_memory) < BATCH_SIZE):
         return
@@ -471,6 +474,9 @@ def optimize_model_with_fake_data():
             param.grad.data.clamp_(-1, 1)
         bd_optim.step()
 
+    if (i_episode%50==0):
+        print(f"bd score: {bd_episode_durations[-1]}")
+
     
 
 def optimize_env_model():
@@ -532,7 +538,7 @@ def optimize_env_model():
         rw = r1 + r2
 
         tot_sigma = scr_sigma[pic_id].mean() + sv_sigma[pic_id].mean()
-        k_s = torch.floor(torch.clip(7-50*total_sigma, 0, 3)).item()
+        k_s = torch.floor(torch.clip(7-30*total_sigma, 0, 3)).item()
 
         fig, ax = plt.subplots(2,2)
         if GRAYSCALE == 0:
@@ -579,7 +585,7 @@ episodes_after_stop = 100
 runs = 5
 
 # MAIN LOOP
-stop_training = True
+stop_training = False
 bd_stop_training = False
 for j in range(runs):
     mean_last = deque([0] * LAST_EPISODES_NUM, LAST_EPISODES_NUM)
@@ -614,7 +620,7 @@ for j in range(runs):
     
     for i_episode in tqdm(range(N_EPISODES)):
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~real~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        """if not stop_training:
+        if not stop_training:
             env.reset()
             init_screen = get_screen()
             screens = deque([init_screen] * FRAMES, FRAMES)
@@ -661,7 +667,8 @@ for j in range(runs):
                         
                     else:
                         stop_training = True
-                    break"""
+                        print("regular boy did it")
+                    break
 
         #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~both data types~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
         if not bd_stop_training:
@@ -708,7 +715,7 @@ for j in range(runs):
                     fake_screen, screen_sigma, fake_vars, var_sigma = env_net(state, action)
                     total_sigma = screen_sigma.mean() + var_sigma.mean()
                     
-                    k_star = int(torch.floor(torch.clip(7-50*total_sigma, 0, 3)).item())
+                    k_star = int(torch.floor(torch.clip(7-30*total_sigma, 0, 3)).item())
                     
                     #print(fake_screen.shape, screens[-1].shape)
                     
