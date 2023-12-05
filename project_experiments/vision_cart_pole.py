@@ -32,7 +32,7 @@ for filename in os.listdir(folder):
 #import wandb
 #wandb.init(project="Cartpole Vision RL")
 
-############ HYPERPARAMETERS ##############
+############ HYPERPARAMETERS ###############
 BATCH_SIZE = 128 # original = 128
 #env_batch_size = 256
 env_epochs = 30#30
