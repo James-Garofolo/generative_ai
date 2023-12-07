@@ -401,19 +401,24 @@ def optimize_model():
     if (i_episode%50==0):
         print(f"regular score: {episode_durations[-1]}")
 
-def optimize_model_with_fake_data():
+def optimize_model_with_fake_data(fake_screens=None, fake_actions=None, fake_next_screens=None, fake_rewards=None):
     if (len(bd_memory) < BATCH_SIZE) and (len(fake_memory) < BATCH_SIZE):
         return
 
-    if  (len(fake_memory) >= BATCH_SIZE):
-        fake_transitions = fake_memory.sample(BATCH_SIZE)
-
-        fake_batch = Transition(*zip(*fake_transitions))
-
-        fake_next_states = torch.cat(fake_batch.next_state)
-        fake_state_batch = torch.cat(fake_batch.state)
-        fake_action_batch = torch.cat(fake_batch.action)
-        fake_reward_batch = torch.cat(fake_batch.reward).type(torch.FloatTensor).to(device)
+    if  not (fake_screens is None):
+        
+        if fake_screens.size(0) > BATCH_SIZE:
+            perm = torch.randperm(fake_screens.size(0))
+            idx = perm[:BATCH_SIZE]
+            fake_next_states = fake_next_screens[idx]
+            fake_state_batch = fake_screens[idx]
+            fake_action_batch = fake_actions[idx]
+            fake_reward_batch = fake_rewards[idx]
+        else:
+            fake_next_states = fake_next_screens
+            fake_state_batch = fake_screens
+            fake_action_batch = fake_actions
+            fake_reward_batch = fake_rewards
 
         
         fake_state_action_values = bd_policy_net(fake_state_batch).gather(1, fake_action_batch)
@@ -538,7 +543,7 @@ def optimize_env_model():
         rw = r1 + r2
 
         tot_sigma = scr_sigma[pic_id].mean() + sv_sigma[pic_id].mean()
-        k_s = torch.floor(torch.clip(7-30*total_sigma, 0, 3)).item()
+        k_s = torch.floor(torch.clip(7-30*tot_sigma, 0, 3)).item()
 
         fig, ax = plt.subplots(2,2)
         if GRAYSCALE == 0:
@@ -572,9 +577,78 @@ def optimize_env_model():
             \nvariance: {tot_sigma}, k_star: {k_s}""")
         fig.savefig(f"project_exp_figs/screen{j}_{i_episode}.png")
         plt.close(fig)
-    #plt.show()
-    #wandb.log({'env_Loss:': loss})
 
+
+    env_net.eval()
+    transitions = env_memory.sample(len(env_memory))
+    # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
+    # detailed explanation). This converts batch-array of Transitions
+    # to Transition of batch-arrays.
+    batch = env_transition(*zip(*transitions))
+
+    # Compute a mask of non-final states and concatenate the batch elements
+    # (a final state would've been the one after which simulation ended)
+    non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+                                        batch.next_state)), device=device, dtype=torch.bool)
+    non_final_next_states = torch.cat([s for s in batch.next_state
+                                                if s is not None])
+    # torch.cat concatenates tensor sequence
+    state_batch = torch.cat(batch.state)
+    action_batch = torch.cat(batch.action)
+    reward_batch = torch.cat(batch.reward)
+    state_variable_batch = torch.cat(batch.state_vars)
+
+    predicted_next_states, scr_sigma, predicted_vars, sv_sigma = env_net(state_batch[non_final_mask], \
+                                                                    action_batch[non_final_mask])
+
+    tot_sigma = scr_sigma.mean(dim=(1,2,3)) + sv_sigma.mean(dim=1)
+    k_s = torch.floor(torch.clip(7-50*tot_sigma, 0, 3))
+
+    fake_screens = None
+    fake_actions = None
+    fake_next_screens = None
+    fake_rewards = None
+    while torch.any(k_s > 0):
+        ids = torch.where(k_s > 0)
+        k_s -= 1
+
+        if fake_screens is None:
+            fake_screens = state_batch[non_final_mask][ids].detach()
+            fake_actions = action_batch[non_final_mask][ids].detach()
+            fake_next_screens = predicted_next_states[ids].detach()
+            
+            # Reward modification for better stability
+            x = predicted_vars[:,0].detach()
+            theta = predicted_vars[:,2].detach()
+            r1 = (env.x_threshold - torch.abs(x)) / env.x_threshold - 0.8
+            r2 = (env.theta_threshold_radians - torch.abs(theta)) / env.theta_threshold_radians - 0.5
+            fake_rewards = r1 + r2
+            #reward = torch.tensor([reward], device=device)
+            """if t >= END_SCORE-1:
+                reward = reward + 20
+                done = 1
+            else: 
+                if done:
+                    reward = reward - 20 """
+            
+        else:
+            fake_screens = torch.cat([fake_screens, predicted_states[ids].detach()])
+            fake_actions = torch.cat([fake_actions, fake_action[ids].detach()])
+            fake_next_screens = torch.cat([fake_next_screens, predicted_next_states[ids].detach()])
+            
+            # Reward modification for better stability
+            x = predicted_vars[:,0].detach()
+            theta = predicted_vars[:,2].detach()
+            r1 = (env.x_threshold - torch.abs(x)) / env.x_threshold - 0.8
+            r2 = (env.theta_threshold_radians - torch.abs(theta)) / env.theta_threshold_radians - 0.5
+            fake_rewards = torch.cat([fake_rewards,r1 + r2])
+            
+
+        predicted_states = predicted_next_states
+        fake_action = bd_select_action(predicted_states, False)
+        predicted_next_states, _, predicted_vars, _ = env_net(predicted_states, fake_action)
+
+    return (fake_screens, fake_actions, fake_next_screens, fake_rewards)
     # Optimize the model
 
 episodes_trajectories = []
@@ -708,7 +782,7 @@ for j in range(runs):
                 env_memory.push(state, action, next_state, reward, state_variables)
 
 
-                if not done:
+                """if not done:
                     # Select and perform an action
                     #fake_action = select_action(state, stop_training)
                     env_net.eval()
@@ -745,7 +819,7 @@ for j in range(runs):
 
                         fake_state = fake_next_state
                         fake_action = select_action(fake_state, stop_training)
-                        fake_screen, _, fake_vars, _ = env_net(fake_state, fake_action)
+                        fake_screen, _, fake_vars, _ = env_net(fake_state, fake_action)"""
 
                 # Move to the next state
                 state = next_state
@@ -759,9 +833,12 @@ for j in range(runs):
                         mean = bd_mean_last[i] + mean
                     mean = mean/LAST_EPISODES_NUM
                     if mean < TRAINING_STOP and bd_stop_training == False:
-                        optimize_env_model()
-                        optimize_model_with_fake_data()
-                        
+                        fake_data = optimize_env_model()
+                        if not (fake_data is None):
+                            optimize_model_with_fake_data(fake_data[0], fake_data[1], 
+                                                          fake_data[2], fake_data[3])
+                        else:
+                            optimize_model_with_fake_data()
                     else:
                         bd_stop_training = True
                         print("bd boy did it")
