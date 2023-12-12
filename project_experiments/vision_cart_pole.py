@@ -15,6 +15,7 @@ import torchvision.transforms as T
 from collections import deque
 from tqdm import tqdm
 import vdp
+import time
 import os, shutil
 from random import randint
 folder = 'project_exp_figs'
@@ -343,10 +344,27 @@ def bd_select_action(state, stop_training):
             # t.max(1) will return largest column value of each row.
             # second column on max result is index of where max element was
             # found, so we pick action with the larger expected reward.
+            
             return bd_policy_net(state).max(1)[1].view(1, 1)
     else:
         return torch.tensor([[random.randrange(n_actions)]], device=device, dtype=torch.long)
     
+# one for the both data types network
+def batch_select_action(state, stop_training):
+    acts = torch.randint(0,n_actions, (state.shape[0],1)).to(device)
+    if stop_training:
+        acts = bd_policy_net(state).max(1)[1].view(-1, 1)
+    else:
+        global steps_done
+        sample = torch.rand(state.shape[0])
+        eps_threshold = EPS_END + (EPS_START - EPS_END) * \
+            math.exp(-1. * steps_done / EPS_DECAY)
+        # print('Epsilon = ', eps_threshold, end='\n')
+        ids = torch.where(sample > eps_threshold)
+
+        acts[ids] = bd_policy_net(state[ids]).max(1)[1].view(-1, 1)
+    
+    return acts
 
 
 # Training 
@@ -406,6 +424,7 @@ def optimize_model_with_fake_data(fake_screens=None, fake_actions=None, fake_nex
         return
 
     if  not (fake_screens is None):
+        #print("used_fake_data")
         
         if fake_screens.size(0) > BATCH_SIZE:
             perm = torch.randperm(fake_screens.size(0))
@@ -423,9 +442,10 @@ def optimize_model_with_fake_data(fake_screens=None, fake_actions=None, fake_nex
         
         fake_state_action_values = bd_policy_net(fake_state_batch).gather(1, fake_action_batch)
 
-        fake_next_state_values = torch.zeros(BATCH_SIZE, device=device)
+        #fake_next_state_values = torch.zeros(BATCH_SIZE, device=device)
         fake_next_state_values = bd_target_net(fake_next_states).max(1)[0].detach()
         # Compute the expected Q values
+        #print(fake_next_state_values.shape, fake_next_states.shape, fake_reward_batch.shape)
         fake_expected_state_action_values = (fake_next_state_values * GAMMA) + fake_reward_batch
 
         # Compute Huber loss
@@ -491,6 +511,7 @@ def optimize_env_model():
     env_net.train()
 
     env_optim.defaults['lr'] = env_lr
+    #s2 = time.time()
     for _ in range(env_epochs):
         transitions = env_memory.sample(BATCH_SIZE)
         # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
@@ -509,9 +530,10 @@ def optimize_env_model():
         action_batch = torch.cat(batch.action)
         reward_batch = torch.cat(batch.reward)
         state_variable_batch = torch.cat(batch.state_vars)
-
+        
         predicted_next_states, scr_sigma, predicted_vars, sv_sigma = env_net(state_batch[non_final_mask], \
                                                                        action_batch[non_final_mask])
+        
 
         
         #loss = F.smooth_l1_loss(predicted_next_states, non_final_next_states)
@@ -532,6 +554,8 @@ def optimize_env_model():
         loss.backward()
         env_optim.step()
         env_optim.defaults['lr'] *= env_decay
+        torch.cuda.empty_cache()
+    #print(f"actual training: {time.time() - s2}")
 
     #print(torch.max(non_final_next_states), torch.min(non_final_next_states))
     if (i_episode%25==0):
@@ -543,7 +567,7 @@ def optimize_env_model():
         rw = r1 + r2
 
         tot_sigma = scr_sigma[pic_id].mean() + sv_sigma[pic_id].mean()
-        k_s = torch.floor(torch.clip(7-30*tot_sigma, 0, 3)).item()
+        k_s = torch.floor(torch.clip(7-40*tot_sigma, 0, 4)).item()
 
         fig, ax = plt.subplots(2,2)
         if GRAYSCALE == 0:
@@ -579,8 +603,9 @@ def optimize_env_model():
         plt.close(fig)
 
 
+
     env_net.eval()
-    transitions = env_memory.sample(len(env_memory))
+    transitions = env_memory.sample(BATCH_SIZE)
     # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
     # detailed explanation). This converts batch-array of Transitions
     # to Transition of batch-arrays.
@@ -602,13 +627,14 @@ def optimize_env_model():
                                                                     action_batch[non_final_mask])
 
     tot_sigma = scr_sigma.mean(dim=(1,2,3)) + sv_sigma.mean(dim=1)
-    k_s = torch.floor(torch.clip(7-50*tot_sigma, 0, 3))
+    k_s = torch.floor(torch.clip(7-40*tot_sigma, 0, 4))
 
     fake_screens = None
     fake_actions = None
     fake_next_screens = None
     fake_rewards = None
     while torch.any(k_s > 0):
+        #print("made_fake_data")
         ids = torch.where(k_s > 0)
         k_s -= 1
 
@@ -618,8 +644,9 @@ def optimize_env_model():
             fake_next_screens = predicted_next_states[ids].detach()
             
             # Reward modification for better stability
-            x = predicted_vars[:,0].detach()
-            theta = predicted_vars[:,2].detach()
+            x = predicted_vars[ids][:,0].detach()
+            #print(x.shape)
+            theta = predicted_vars[ids][:,2].detach()
             r1 = (env.x_threshold - torch.abs(x)) / env.x_threshold - 0.8
             r2 = (env.theta_threshold_radians - torch.abs(theta)) / env.theta_threshold_radians - 0.5
             fake_rewards = r1 + r2
@@ -637,16 +664,19 @@ def optimize_env_model():
             fake_next_screens = torch.cat([fake_next_screens, predicted_next_states[ids].detach()])
             
             # Reward modification for better stability
-            x = predicted_vars[:,0].detach()
-            theta = predicted_vars[:,2].detach()
+            x = predicted_vars[ids][:,0].detach()
+            theta = predicted_vars[ids][:,2].detach()
             r1 = (env.x_threshold - torch.abs(x)) / env.x_threshold - 0.8
             r2 = (env.theta_threshold_radians - torch.abs(theta)) / env.theta_threshold_radians - 0.5
             fake_rewards = torch.cat([fake_rewards,r1 + r2])
             
 
         predicted_states = predicted_next_states
-        fake_action = bd_select_action(predicted_states, False)
+        fake_action = batch_select_action(predicted_states, False)
         predicted_next_states, _, predicted_vars, _ = env_net(predicted_states, fake_action)
+
+    #if not (fake_screens is None):
+    #    print(fake_screens.shape, fake_actions.shape, fake_next_screens.shape, fake_rewards.shape)
 
     return (fake_screens, fake_actions, fake_next_screens, fake_rewards)
     # Optimize the model
@@ -656,7 +686,7 @@ bd_episodes_trajectories = []
 
 episodes_after_stop = 100
 
-runs = 5
+runs = 2
 
 # MAIN LOOP
 stop_training = False
@@ -700,7 +730,7 @@ for j in range(runs):
             screens = deque([init_screen] * FRAMES, FRAMES)
             state = torch.cat(list(screens), dim=1)
             
-
+            #s1 = time.time()
             for t in count():        
                 # Select and perform an action
                 action = select_action(state, stop_training)
@@ -737,7 +767,11 @@ for j in range(runs):
                         mean = mean_last[i] + mean
                     mean = mean/LAST_EPISODES_NUM
                     if mean < TRAINING_STOP and stop_training == False:
+                        #print(f"\nregular exploration: {time.time()-s1}")
+                        #s1 = time.time()
+                        torch.cuda.empty_cache()
                         optimize_model()
+                        #print(f"\nregular training: {time.time()-s1}")
                         
                     else:
                         stop_training = True
@@ -753,7 +787,8 @@ for j in range(runs):
 
             fake_screens = deque([init_screen] * FRAMES, FRAMES)
             fake_state = torch.cat(list(fake_screens), dim=1)
-
+            
+            #s1 = time.time()
             for t in count():
                 # Select and perform an action
                 action = bd_select_action(state, stop_training)
@@ -780,46 +815,7 @@ for j in range(runs):
                 bd_memory.push(state, action, next_state, reward)
                 state_variables=torch.tensor(state_variables, device=device).view(-1,4)
                 env_memory.push(state, action, next_state, reward, state_variables)
-
-
-                """if not done:
-                    # Select and perform an action
-                    #fake_action = select_action(state, stop_training)
-                    env_net.eval()
-                    fake_screen, screen_sigma, fake_vars, var_sigma = env_net(state, action)
-                    total_sigma = screen_sigma.mean() + var_sigma.mean()
-                    
-                    k_star = int(torch.floor(torch.clip(7-30*total_sigma, 0, 3)).item())
-                    
-                    #print(fake_screen.shape, screens[-1].shape)
-                    
-                    fake_action = action
-                    for k in range(k_star):
-                        fake_screens.append(fake_screen[:,0,:,:].view(1,1,60,135))
-                        
-                        fake_next_state = torch.cat(list(fake_screens), dim=1) #if not done else None
-                        
-                        # Reward modification for better stability
-                        x = fake_vars[:,0]
-                        theta = fake_vars[:,2]
-                        r1 = (env.x_threshold - torch.abs(x)) / env.x_threshold - 0.8
-                        r2 = (env.theta_threshold_radians - torch.abs(theta)) / env.theta_threshold_radians - 0.5
-                        reward = r1 + r2
-                        #reward = torch.tensor([reward], device=device)
-                        if t >= END_SCORE-1:
-                            reward = reward + 20
-                            done = 1
-                        else: 
-                            if done:
-                                reward = reward - 20 
-
-                        # Store the transition in memory
-                        fake_memory.push(fake_state.detach(), fake_action.detach(), 
-                                         fake_next_state.detach(), reward.detach())
-
-                        fake_state = fake_next_state
-                        fake_action = select_action(fake_state, stop_training)
-                        fake_screen, _, fake_vars, _ = env_net(fake_state, fake_action)"""
+                
 
                 # Move to the next state
                 state = next_state
@@ -833,12 +829,18 @@ for j in range(runs):
                         mean = bd_mean_last[i] + mean
                     mean = mean/LAST_EPISODES_NUM
                     if mean < TRAINING_STOP and bd_stop_training == False:
+                        #print(f"\nbd exploration: {time.time()-s1}")
+                        #s1 = time.time()
+                        torch.cuda.empty_cache()
                         fake_data = optimize_env_model()
+                        #print(f"\nenv training: {time.time()-s1}")
+                        #s1 = time.time()
                         if not (fake_data is None):
                             optimize_model_with_fake_data(fake_data[0], fake_data[1], 
                                                           fake_data[2], fake_data[3])
                         else:
                             optimize_model_with_fake_data()
+                        #print(f"\nbd training: {time.time()-s1}")
                     else:
                         bd_stop_training = True
                         print("bd boy did it")
@@ -866,6 +868,7 @@ for j in range(runs):
 
     print('Complete')
     stop_training = False
+    bd_stop_training = False
     episodes_trajectories.append(episode_durations)
     bd_episodes_trajectories.append(bd_episode_durations)
     
@@ -975,5 +978,5 @@ ax.plot(t, bd_score_mean, label='Real and Fake')
 
 
 ax.legend()
-fig.savefig('score.png')
+fig.savefig('score_bd.png')
 
