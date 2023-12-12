@@ -289,14 +289,14 @@ def get_screen():
     return resize(screen).unsqueeze(0).to(device)
 
 env.reset()
-plt.figure()
+"""plt.figure()
 if GRAYSCALE == 0:
     plt.imshow(get_screen().cpu().squeeze(0).permute(1, 2, 0).numpy(),
             interpolation='none')
 else:
     plt.imshow(get_screen().cpu().squeeze(0).permute(
         1, 2, 0).numpy().squeeze(), cmap='gray')
-plt.title('Example extracted screen')
+plt.title('Example extracted screen')"""
 #plt.ioff()
 
 env.close()
@@ -333,11 +333,11 @@ def select_action(state, stop_training):
     
 # one for the both data types network
 def bd_select_action(state, stop_training):
-    global steps_done
+    global bd_steps_done
     sample = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * \
-        math.exp(-1. * steps_done / EPS_DECAY)
-    steps_done += 1
+        math.exp(-1. * bd_steps_done / EPS_DECAY)
+    bd_steps_done += 1
     # print('Epsilon = ', eps_threshold, end='\n')
     if sample > eps_threshold or stop_training:
         with torch.no_grad():
@@ -355,10 +355,10 @@ def batch_select_action(state, stop_training):
     if stop_training:
         acts = bd_policy_net(state).max(1)[1].view(-1, 1)
     else:
-        global steps_done
+        global bd_steps_done
         sample = torch.rand(state.shape[0])
         eps_threshold = EPS_END + (EPS_START - EPS_END) * \
-            math.exp(-1. * steps_done / EPS_DECAY)
+            math.exp(-1. * bd_steps_done / EPS_DECAY)
         # print('Epsilon = ', eps_threshold, end='\n')
         ids = torch.where(sample > eps_threshold)
 
@@ -416,8 +416,8 @@ def optimize_model():
         param.grad.data.clamp_(-1, 1)
     optimizer.step()
 
-    if (i_episode%50==0):
-        print(f"regular score: {episode_durations[-1]}")
+    #if (i_episode%50==0):
+    #    print(f"regular score: {episode_durations[-1]}")
 
 def optimize_model_with_fake_data(fake_screens=None, fake_actions=None, fake_next_screens=None, fake_rewards=None):
     if (len(bd_memory) < BATCH_SIZE) and (len(fake_memory) < BATCH_SIZE):
@@ -499,8 +499,8 @@ def optimize_model_with_fake_data(fake_screens=None, fake_actions=None, fake_nex
             param.grad.data.clamp_(-1, 1)
         bd_optim.step()
 
-    if (i_episode%50==0):
-        print(f"bd score: {bd_episode_durations[-1]}")
+    #if (i_episode%50==0):
+    #    print(f"bd score: {bd_episode_durations[-1]}")
 
     
 
@@ -686,27 +686,164 @@ bd_episodes_trajectories = []
 
 episodes_after_stop = 100
 
-runs = 2
+runs = 1
 
 # MAIN LOOP
 stop_training = False
-bd_stop_training = False
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~real~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 for j in range(runs):
     mean_last = deque([0] * LAST_EPISODES_NUM, LAST_EPISODES_NUM)
     policy_net = DQN(screen_height, screen_width, n_actions).to(device)
     target_net = DQN(screen_height, screen_width, n_actions).to(device)
-    env_net = D_AutoEncoder(screen_height, screen_width, latent_dims, n_actions, action_latents).to(device)
     target_net.load_state_dict(policy_net.state_dict())
     target_net.eval()
+
+    optimizer = optim.RMSprop(policy_net.parameters())
+    memory = ReplayMemory(MEMORY_SIZE)
     
+    count_final = 0
+    
+    steps_done = 0
+    episode_durations = []
+
+    for i_episode in tqdm(range(N_EPISODES)):
+        env.reset()
+        init_screen = get_screen()
+        screens = deque([init_screen] * FRAMES, FRAMES)
+        state = torch.cat(list(screens), dim=1)
+        
+        #s1 = time.time()
+        for t in count():        
+            # Select and perform an action
+            action = select_action(state, stop_training)
+            state_variables, _, done, _, _ = env.step(action.item())
+
+            # Observe new state
+            screens.append(get_screen())
+            next_state = torch.cat(list(screens), dim=1) if not done else None
+
+            # Reward modification for better stability
+            x, x_dot, theta, theta_dot = state_variables
+            r1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
+            r2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
+            reward = r1 + r2
+            reward = torch.tensor([reward], device=device)
+            if t >= END_SCORE-1:
+                reward = reward + 20
+                done = 1
+            else: 
+                if done:
+                    reward = reward - 20 
+
+            # Store the transition in memory
+            memory.push(state, action, next_state, reward)
+            # Move to the next state
+            state = next_state
+            # Perform one step of the optimization (on the target network)
+            if done:
+                episode_durations.append(t + 1)
+                mean_last.append(t + 1)
+                mean = 0
+                #wandb.log({'Episode duration': t+1 , 'Episode number': i_episode})
+                for i in range(LAST_EPISODES_NUM):
+                    mean = mean_last[i] + mean
+                mean = mean/LAST_EPISODES_NUM
+                if mean < TRAINING_STOP and stop_training == False:
+                    #print(f"\nregular exploration: {time.time()-s1}")
+                    #s1 = time.time()
+                    torch.cuda.empty_cache()
+                    optimize_model()
+                    #print(f"\nregular training: {time.time()-s1}")
+                    
+                else:
+                    stop_training = True
+                    #print("regular boy did it")
+                break
+
+
+
+        # Update the target network, copying all weights and biases in DQN
+        if i_episode % TARGET_UPDATE == 0:
+            target_net.load_state_dict(policy_net.state_dict())
+            #bd_target_net.load_state_dict(bd_policy_net.state_dict())
+        if stop_training == True:
+            count_final += 1
+            
+        #if bd_stop_training == True:
+        #    bd_count_final += 1
+        
+        if stop_training:# and bd_stop_training:
+            if (count_final >= 100):# and (bd_count_final >= 100):
+                break
+
+    print('Complete')
+    stop_training = False
+    #bd_stop_training = False
+    episodes_trajectories.append(episode_durations)
+    #bd_episodes_trajectories.append(bd_episode_durations)
+
+# Cherry picking best runs
+best = []
+for et in episodes_trajectories:
+    best.append(et)
+"""best.append(episodes_trajectories[0])
+best.append(episodes_trajectories[1])
+best.append(episodes_trajectories[2])
+best.append(episodes_trajectories[3])
+best.append(episodes_trajectories[5])
+best.append(episodes_trajectories[6])"""
+
+maximum = 0
+for i in range(len(best)):
+    maximum = max(len(best[i]), maximum)
+    
+# Fill the episodes to make them the same length
+for i in range(len(best)):
+    length = len(best[i])
+    for j in range(maximum - len(best[i])):
+        best[i].append(best[i][j+length-100])
+    best[i] = np.asarray(best[i])
+    
+best = np.asarray(best)
+
+
+# To numpy
+score_mean = np.zeros(maximum)
+score_std = np.zeros(maximum)
+last100_mean = np.zeros(maximum)
+print(best[:, max(0, -99):1].mean())
+for i in range(maximum):
+    score_mean[i]  = best[:, i].mean()
+    score_std[i] = best[:, i].std()
+    last100_mean[i] = best[:, max(0, i-50):min(maximum, i+50)].mean()
+print(len(last100_mean))
+
+t = np.arange(0, maximum, 1)
+# from scipy.interpolate import make_interp_spline # make smooth version
+# interpol = make_interp_spline(t, score_mean, k=3)  # type: BSpline
+
+fig, ax = plt.subplots(figsize=(16, 8))
+ax.fill_between(t, np.maximum(score_mean - score_std, 0),
+                np.minimum(score_mean + score_std, END_SCORE), color='b', alpha=0.2)
+# ax.legend(loc='upper right')
+ax.set_xlabel('Episode')
+ax.set_ylabel('Score')
+# ax.set_title('Inverted Pendulum Training Plot from Pixels')
+ax.plot(t, score_mean, label='Real Data Only')
+#ax.plot(t, last100_mean, color='purple', linestyle='dotted', label='Smoothed mean')
+
+
+del(t, last100_mean, best, score_mean, score_std, stop_training, episodes_trajectories, episode_durations, memory, target_net, policy_net, optimizer, mean_last)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~both data types~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+bd_stop_training = False
+for j in range(runs):
+    env_net = D_AutoEncoder(screen_height, screen_width, latent_dims, n_actions, action_latents).to(device)
     bd_mean_last = deque([0] * LAST_EPISODES_NUM, LAST_EPISODES_NUM)
     bd_policy_net = DQN(screen_height, screen_width, n_actions).to(device)
     bd_target_net = DQN(screen_height, screen_width, n_actions).to(device)
     bd_target_net.load_state_dict(policy_net.state_dict())
     bd_target_net.eval()
-
-    optimizer = optim.RMSprop(policy_net.parameters())
-    memory = ReplayMemory(MEMORY_SIZE)
 
     env_memory = EnvMemory(MEMORY_SIZE)
     env_optim = optim.Adam(env_net.parameters(), env_lr)
@@ -714,71 +851,12 @@ for j in range(runs):
     bd_optim = optim.RMSprop(bd_policy_net.parameters())
     bd_memory = ReplayMemory(MEMORY_SIZE)
     fake_memory = ReplayMemory(MEMORY_SIZE)
-    
-    count_final = 0
     bd_count_final = 0
     
-    steps_done = 0
-    episode_durations = []
+    bd_steps_done = 0
     bd_episode_durations = []
     
     for i_episode in tqdm(range(N_EPISODES)):
-        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~real~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        if not stop_training:
-            env.reset()
-            init_screen = get_screen()
-            screens = deque([init_screen] * FRAMES, FRAMES)
-            state = torch.cat(list(screens), dim=1)
-            
-            #s1 = time.time()
-            for t in count():        
-                # Select and perform an action
-                action = select_action(state, stop_training)
-                state_variables, _, done, _, _ = env.step(action.item())
-
-                # Observe new state
-                screens.append(get_screen())
-                next_state = torch.cat(list(screens), dim=1) if not done else None
-
-                # Reward modification for better stability
-                x, x_dot, theta, theta_dot = state_variables
-                r1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
-                r2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
-                reward = r1 + r2
-                reward = torch.tensor([reward], device=device)
-                if t >= END_SCORE-1:
-                    reward = reward + 20
-                    done = 1
-                else: 
-                    if done:
-                        reward = reward - 20 
-
-                # Store the transition in memory
-                memory.push(state, action, next_state, reward)
-                # Move to the next state
-                state = next_state
-                # Perform one step of the optimization (on the target network)
-                if done:
-                    episode_durations.append(t + 1)
-                    mean_last.append(t + 1)
-                    mean = 0
-                    #wandb.log({'Episode duration': t+1 , 'Episode number': i_episode})
-                    for i in range(LAST_EPISODES_NUM):
-                        mean = mean_last[i] + mean
-                    mean = mean/LAST_EPISODES_NUM
-                    if mean < TRAINING_STOP and stop_training == False:
-                        #print(f"\nregular exploration: {time.time()-s1}")
-                        #s1 = time.time()
-                        torch.cuda.empty_cache()
-                        optimize_model()
-                        #print(f"\nregular training: {time.time()-s1}")
-                        
-                    else:
-                        stop_training = True
-                        print("regular boy did it")
-                    break
-
-        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~both data types~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
         if not bd_stop_training:
             env.reset()
             init_screen = get_screen()
@@ -843,93 +921,40 @@ for j in range(runs):
                         #print(f"\nbd training: {time.time()-s1}")
                     else:
                         bd_stop_training = True
-                        print("bd boy did it")
+                        #print("bd boy did it")
                     break
 
-
-
-
-            #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~process~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
         # Update the target network, copying all weights and biases in DQN
         if i_episode % TARGET_UPDATE == 0:
             target_net.load_state_dict(policy_net.state_dict())
-            bd_target_net.load_state_dict(bd_policy_net.state_dict())
+            #bd_target_net.load_state_dict(bd_policy_net.state_dict())
         if stop_training == True:
             count_final += 1
             
-        if bd_stop_training == True:
-            bd_count_final += 1
+        #if bd_stop_training == True:
+        #    bd_count_final += 1
         
-        if stop_training and bd_stop_training:
-            if (count_final >= 100) and (bd_count_final >= 100):
+        if stop_training:# and bd_stop_training:
+            if (count_final >= 100):# and (bd_count_final >= 100):
                 break
 
     print('Complete')
     stop_training = False
-    bd_stop_training = False
+    #bd_stop_training = False
     episodes_trajectories.append(episode_durations)
-    bd_episodes_trajectories.append(bd_episode_durations)
-    
-
-    
-
-plt.show()
-
-# Cherry picking best runs
-best = []
-for et in episodes_trajectories:
-    best.append(et)
-"""best.append(episodes_trajectories[0])
-best.append(episodes_trajectories[1])
-best.append(episodes_trajectories[2])
-best.append(episodes_trajectories[3])
-best.append(episodes_trajectories[5])
-best.append(episodes_trajectories[6])"""
-
-maximum = 0
-for i in range(len(best)):
-    maximum = max(len(best[i]), maximum)
-    
-# Fill the episodes to make them the same length
-for i in range(len(best)):
-    length = len(best[i])
-    for j in range(maximum - len(best[i])):
-        best[i].append(best[i][j+length-100])
-    best[i] = np.asarray(best[i])
-    
-best = np.asarray(best)
-
-
-# To numpy
-score_mean = np.zeros(maximum)
-score_std = np.zeros(maximum)
-last100_mean = np.zeros(maximum)
-print(best[:, max(0, -99):1].mean())
-for i in range(maximum):
-    score_mean[i]  = best[:, i].mean()
-    score_std[i] = best[:, i].std()
-    last100_mean[i] = best[:, max(0, i-50):min(maximum, i+50)].mean()
-print(len(last100_mean))
-
-t = np.arange(0, maximum, 1)
+    #bd_episodes_trajectories.append(bd_episode_durations)
 
 
 
 
-# from scipy.interpolate import make_interp_spline # make smooth version
-# interpol = make_interp_spline(t, score_mean, k=3)  # type: BSpline
 
-fig, ax = plt.subplots(figsize=(16, 8))
-ax.fill_between(t, np.maximum(score_mean - score_std, 0),
-                np.minimum(score_mean + score_std, END_SCORE), color='b', alpha=0.2)
-# ax.legend(loc='upper right')
-ax.set_xlabel('Episode')
-ax.set_ylabel('Score')
-# ax.set_title('Inverted Pendulum Training Plot from Pixels')
-ax.plot(t, score_mean, label='Real Data Only')
-#ax.plot(t, last100_mean, color='purple', linestyle='dotted', label='Smoothed mean')
+
+
+
+
+
 
 
 # again for the both data model
@@ -967,6 +992,7 @@ for i in range(maximum):
     bd_score_std[i] = best[:, i].std()
     bd_last100_mean[i] = best[:, max(0, i-50):min(maximum, i+50)].mean()
 print(len(bd_last100_mean))
+t = np.arange(0, maximum, 1)
 
 
 
