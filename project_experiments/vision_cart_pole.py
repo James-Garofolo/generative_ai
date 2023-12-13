@@ -903,7 +903,7 @@ for j in range(runs):
             #s1 = time.time()
             for t in count():
                 # Select and perform an action
-                action = bd_select_action(state, stop_training)
+                action = bd_select_action(state, bd_stop_training)
                 state_variables, _, done, _, _ = env.step(action.item())
 
                 # Observe new state
