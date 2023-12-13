@@ -499,8 +499,8 @@ def optimize_model_with_fake_data(fake_screens=None, fake_actions=None, fake_nex
             param.grad.data.clamp_(-1, 1)
         bd_optim.step()
 
-    #if (i_episode%50==0):
-    #    print(f"bd score: {bd_episode_durations[-1]}")
+    if (i_episode%50==0):
+        print(f"bd score: {bd_episode_durations[-1]}")
 
     
 
@@ -842,7 +842,7 @@ for j in range(runs):
     bd_mean_last = deque([0] * LAST_EPISODES_NUM, LAST_EPISODES_NUM)
     bd_policy_net = DQN(screen_height, screen_width, n_actions).to(device)
     bd_target_net = DQN(screen_height, screen_width, n_actions).to(device)
-    bd_target_net.load_state_dict(policy_net.state_dict())
+    bd_target_net.load_state_dict(bd_policy_net.state_dict())
     bd_target_net.eval()
 
     env_memory = EnvMemory(MEMORY_SIZE)
@@ -928,23 +928,23 @@ for j in range(runs):
 
         # Update the target network, copying all weights and biases in DQN
         if i_episode % TARGET_UPDATE == 0:
-            target_net.load_state_dict(policy_net.state_dict())
-            #bd_target_net.load_state_dict(bd_policy_net.state_dict())
-        if stop_training == True:
-            count_final += 1
+            #target_net.load_state_dict(policy_net.state_dict())
+            bd_target_net.load_state_dict(bd_policy_net.state_dict())
+        #if stop_training == True:
+        #    count_final += 1
             
-        #if bd_stop_training == True:
-        #    bd_count_final += 1
+        if bd_stop_training == True:
+            bd_count_final += 1
         
-        if stop_training:# and bd_stop_training:
-            if (count_final >= 100):# and (bd_count_final >= 100):
+        if bd_stop_training:
+            if (bd_count_final >= 100):
                 break
 
     print('Complete')
-    stop_training = False
-    #bd_stop_training = False
-    episodes_trajectories.append(episode_durations)
-    #bd_episodes_trajectories.append(bd_episode_durations)
+    #stop_training = False
+    bd_stop_training = False
+    #episodes_trajectories.append(episode_durations)
+    bd_episodes_trajectories.append(bd_episode_durations)
 
 
 
