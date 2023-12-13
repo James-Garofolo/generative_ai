@@ -366,6 +366,40 @@ def batch_select_action(state, stop_training):
     
     return acts
 
+# single and batched using env net to guide exploration
+def g_select_action(state, stop_training):
+    global g_steps_done
+    sample = random.random()
+    eps_threshold = EPS_END + (EPS_START - EPS_END) * \
+        math.exp(-1. * g_steps_done / EPS_DECAY)
+    g_steps_done += 1
+    # print('Epsilon = ', eps_threshold, end='\n')
+    if sample > eps_threshold or stop_training:
+        with torch.no_grad():
+            # t.max(1) will return largest column value of each row.
+            # second column on max result is index of where max element was
+            # found, so we pick action with the larger expected reward.
+            
+            return g_policy_net(state).max(1)[1].view(1, 1)
+    else:
+        return torch.tensor([[random.randrange(n_actions)]], device=device, dtype=torch.long)
+    
+
+def g_batch_select_action(state, stop_training):
+    acts = torch.randint(0,n_actions, (state.shape[0],1)).to(device)
+    if stop_training:
+        acts = bd_policy_net(state).max(1)[1].view(-1, 1)
+    else:
+        global bd_steps_done
+        sample = torch.rand(state.shape[0])
+        eps_threshold = EPS_END + (EPS_START - EPS_END) * \
+            math.exp(-1. * bd_steps_done / EPS_DECAY)
+        # print('Epsilon = ', eps_threshold, end='\n')
+        ids = torch.where(sample > eps_threshold)
+
+        acts[ids] = bd_policy_net(state[ids]).max(1)[1].view(-1, 1)
+    
+    return acts
 
 # Training 
 def optimize_model():
