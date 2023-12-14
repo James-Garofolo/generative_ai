@@ -382,22 +382,27 @@ def g_select_action(state, stop_training):
             
             return g_policy_net(state).max(1)[1].view(1, 1)
     else:
-        return torch.tensor([[random.randrange(n_actions)]], device=device, dtype=torch.long)
+        possible_actions = torch.arange(n_actions).view(-1,1)
+        _, scr_sigma, _, sv_sigma = env_net(state.repeat(n_actions,1,1,1), possible_actions)
+        tot_sig = scr_sigma.mean((1,2,3)) + sv_sigma.mean(1) # dimensions that aren't the batch id
+        return possible_actions[torch.argmax(tot_sig)]
+
+
     
 
 def g_batch_select_action(state, stop_training):
     acts = torch.randint(0,n_actions, (state.shape[0],1)).to(device)
     if stop_training:
-        acts = bd_policy_net(state).max(1)[1].view(-1, 1)
+        acts = g_policy_net(state).max(1)[1].view(-1, 1)
     else:
-        global bd_steps_done
+        global g_steps_done
         sample = torch.rand(state.shape[0])
         eps_threshold = EPS_END + (EPS_START - EPS_END) * \
-            math.exp(-1. * bd_steps_done / EPS_DECAY)
+            math.exp(-1. * g_steps_done / EPS_DECAY)
         # print('Epsilon = ', eps_threshold, end='\n')
         ids = torch.where(sample > eps_threshold)
 
-        acts[ids] = bd_policy_net(state[ids]).max(1)[1].view(-1, 1)
+        acts[ids] = g_policy_net(state[ids]).max(1)[1].view(-1, 1)
     
     return acts
 
@@ -454,7 +459,7 @@ def optimize_model():
     #    print(f"regular score: {episode_durations[-1]}")
 
 def optimize_model_with_fake_data(fake_screens=None, fake_actions=None, fake_next_screens=None, fake_rewards=None):
-    if (len(bd_memory) < BATCH_SIZE) and (len(fake_memory) < BATCH_SIZE):
+    if (len(bd_memory) < BATCH_SIZE):
         return
 
     if  not (fake_screens is None):
@@ -536,9 +541,91 @@ def optimize_model_with_fake_data(fake_screens=None, fake_actions=None, fake_nex
     if (i_episode%50==0):
         print(f"bd score: {bd_episode_durations[-1]}")
 
-    
+def optimize_guided_model(fake_screens=None, fake_actions=None, fake_next_screens=None, fake_rewards=None):
+    if (len(g_memory) < BATCH_SIZE):
+        return
 
-def optimize_env_model():
+    if  not (fake_screens is None):
+        #print("used_fake_data")
+        
+        if fake_screens.size(0) > BATCH_SIZE:
+            perm = torch.randperm(fake_screens.size(0))
+            idx = perm[:BATCH_SIZE]
+            fake_next_states = fake_next_screens[idx]
+            fake_state_batch = fake_screens[idx]
+            fake_action_batch = fake_actions[idx]
+            fake_reward_batch = fake_rewards[idx]
+        else:
+            fake_next_states = fake_next_screens
+            fake_state_batch = fake_screens
+            fake_action_batch = fake_actions
+            fake_reward_batch = fake_rewards
+
+        
+        fake_state_action_values = g_policy_net(fake_state_batch).gather(1, fake_action_batch)
+
+        #fake_next_state_values = torch.zeros(BATCH_SIZE, device=device)
+        fake_next_state_values = g_target_net(fake_next_states).max(1)[0].detach()
+        # Compute the expected Q values
+        #print(fake_next_state_values.shape, fake_next_states.shape, fake_reward_batch.shape)
+        fake_expected_state_action_values = (fake_next_state_values * GAMMA) + fake_reward_batch
+
+        # Compute Huber loss
+        g_loss = F.smooth_l1_loss(fake_state_action_values, fake_expected_state_action_values.unsqueeze(1))
+        # Optimize the model
+        g_optim.zero_grad()
+        g_loss.backward()
+        for param in g_policy_net.parameters():
+            param.grad.data.clamp_(-1, 1)
+        g_optim.step()
+
+    if (len(g_memory) >= BATCH_SIZE):
+        transitions = g_memory.sample(BATCH_SIZE)
+        # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
+        # detailed explanation). This converts batch-array of Transitions
+        # to Transition of batch-arrays.
+        batch = Transition(*zip(*transitions))
+
+        # Compute a mask of non-final states and concatenate the batch elements
+        # (a final state would've been the one after which simulation ended)
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+                                            batch.next_state)), device=device, dtype=torch.bool)
+        non_final_next_states = torch.cat([s for s in batch.next_state
+                                                    if s is not None])
+        # torch.cat concatenates tensor sequence
+        state_batch = torch.cat(batch.state)
+        action_batch = torch.cat(batch.action)
+        reward_batch = torch.cat(batch.reward).type(torch.FloatTensor).to(device)
+
+        # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
+        # columns of actions taken. These are the actions which would've been taken
+        # for each batch state according to policy_net
+        state_action_values = g_policy_net(state_batch).gather(1, action_batch)
+
+        # Compute V(s_{t+1}) for all next states.
+        # Expected values of actions for non_final_next_states are computed based
+        # on the "older" target_net; selecting their best reward with max(1)[0].
+        # This is merged based on the mask, such that we'll have either the expected
+        # state value or 0 in case the state was final.
+        next_state_values = torch.zeros(BATCH_SIZE, device=device)
+        next_state_values[non_final_mask] = g_target_net(non_final_next_states).max(1)[0].detach()
+        # Compute the expected Q values
+        expected_state_action_values = (next_state_values * GAMMA) + reward_batch
+
+        # Compute Huber loss
+        g_loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
+        # Optimize the model
+        g_optim.zero_grad()
+        g_loss.backward()
+        for param in g_policy_net.parameters():
+            param.grad.data.clamp_(-1, 1)
+        g_optim.step()
+
+    if (i_episode%50==0):
+        print(f"guided score: {g_episode_durations[-1]}")
+
+
+def optimize_env_model(guided=False):
     if len(env_memory) < BATCH_SIZE:
         return
     
@@ -706,7 +793,10 @@ def optimize_env_model():
             
 
         predicted_states = predicted_next_states
-        fake_action = batch_select_action(predicted_states, False)
+        if guided:
+            fake_action = g_batch_select_action(predicted_states, False)
+        else:
+            fake_action = batch_select_action(predicted_states, False)
         predicted_next_states, _, predicted_vars, _ = env_net(predicted_states, fake_action)
 
     #if not (fake_screens is None):
@@ -716,8 +806,6 @@ def optimize_env_model():
     # Optimize the model
 
 episodes_trajectories = []
-bd_episodes_trajectories = []
-
 episodes_after_stop = 100
 
 runs = 1
@@ -820,12 +908,6 @@ for j in range(runs):
 best = []
 for et in episodes_trajectories:
     best.append(et)
-"""best.append(episodes_trajectories[0])
-best.append(episodes_trajectories[1])
-best.append(episodes_trajectories[2])
-best.append(episodes_trajectories[3])
-best.append(episodes_trajectories[5])
-best.append(episodes_trajectories[6])"""
 
 maximum = 0
 for i in range(len(best)):
@@ -870,6 +952,7 @@ ax.plot(t, score_mean, label='Real Data Only')
 del(t, last100_mean, best, score_mean, score_std, stop_training, episodes_trajectories, episode_durations, memory, target_net, policy_net, optimizer, mean_last)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~both data types~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+bd_episodes_trajectories = []
 bd_stop_training = False
 for j in range(runs):
     env_net = D_AutoEncoder(screen_height, screen_width, latent_dims, n_actions, action_latents).to(device)
@@ -884,7 +967,6 @@ for j in range(runs):
     
     bd_optim = optim.RMSprop(bd_policy_net.parameters())
     bd_memory = ReplayMemory(MEMORY_SIZE)
-    fake_memory = ReplayMemory(MEMORY_SIZE)
     bd_count_final = 0
     
     bd_steps_done = 0
@@ -986,21 +1068,10 @@ for j in range(runs):
 
 
 
-
-
-
-
-
 # again for the both data model
 best = []
 for et in bd_episodes_trajectories:
     best.append(et)
-"""best.append(episodes_trajectories[0])
-best.append(episodes_trajectories[1])
-best.append(episodes_trajectories[2])
-best.append(episodes_trajectories[3])
-best.append(episodes_trajectories[5])
-best.append(episodes_trajectories[6])"""
 
 maximum = 0
 for i in range(len(best)):
@@ -1037,6 +1108,168 @@ ax.plot(t, bd_score_mean, label='Real and Fake')
 
 
 
+
+
+del(t, bd_last100_mean, best, bd_score_mean, bd_score_std, bd_stop_training, bd_episodes_trajectories, bd_episode_durations, bd_memory, 
+    bd_target_net, bd_policy_net, bd_optim, bd_mean_last, env_memory)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~myyyyyyyyyyyyy wayyyyyyyyyyyyyyy~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+g_episodes_trajectories = []
+g_stop_training = False
+for j in range(runs):
+    env_net = D_AutoEncoder(screen_height, screen_width, latent_dims, n_actions, action_latents).to(device)
+    g_mean_last = deque([0] * LAST_EPISODES_NUM, LAST_EPISODES_NUM)
+    g_policy_net = DQN(screen_height, screen_width, n_actions).to(device)
+    g_target_net = DQN(screen_height, screen_width, n_actions).to(device)
+    g_target_net.load_state_dict(g_policy_net.state_dict())
+    g_target_net.eval()
+
+    env_memory = EnvMemory(MEMORY_SIZE)
+    env_optim = optim.Adam(env_net.parameters(), env_lr)
+    
+    g_optim = optim.RMSprop(g_policy_net.parameters())
+    g_memory = ReplayMemory(MEMORY_SIZE)
+    g_count_final = 0
+    
+    g_steps_done = 0
+    g_episode_durations = []
+    
+    for i_episode in tqdm(range(N_EPISODES)):
+        if not g_stop_training:
+            env.reset()
+            init_screen = get_screen()
+            screens = deque([init_screen] * FRAMES, FRAMES)
+            state = torch.cat(list(screens), dim=1)
+
+            fake_screens = deque([init_screen] * FRAMES, FRAMES)
+            fake_state = torch.cat(list(fake_screens), dim=1)
+            
+            #s1 = time.time()
+            for t in count():
+                # Select and perform an action
+                action = g_select_action(state, g_stop_training)
+                state_variables, _, done, _, _ = env.step(action.item())
+
+                # Observe new state
+                screens.append(get_screen())
+                next_state = torch.cat(list(screens), dim=1) if not done else None
+
+                # Reward modification for better stability
+                x, x_dot, theta, theta_dot = state_variables
+                r1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
+                r2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
+                reward = r1 + r2
+                reward = torch.tensor([reward], device=device)
+                if t >= END_SCORE-1:
+                    reward = reward + 20
+                    done = 1
+                else: 
+                    if done:
+                        reward = reward - 20 
+
+                # Store the transition in memory
+                g_memory.push(state, action, next_state, reward)
+                state_variables=torch.tensor(state_variables, device=device).view(-1,4)
+                env_memory.push(state, action, next_state, reward, state_variables)
+                
+
+                # Move to the next state
+                state = next_state
+                # Perform one step of the optimization (on the target network)
+                if done:
+                    g_episode_durations.append(t + 1)
+                    g_mean_last.append(t + 1)
+                    mean = 0
+                    #wandb.log({'Episode duration': t+1 , 'Episode number': i_episode})
+                    for i in range(LAST_EPISODES_NUM):
+                        mean = g_mean_last[i] + mean
+                    mean = mean/LAST_EPISODES_NUM
+                    if mean < TRAINING_STOP and g_stop_training == False:
+                        #print(f"\nbd exploration: {time.time()-s1}")
+                        #s1 = time.time()
+                        torch.cuda.empty_cache()
+                        fake_data = optimize_env_model(guided=True)
+                        #print(f"\nenv training: {time.time()-s1}")
+                        #s1 = time.time()
+                        if not (fake_data is None):
+                            optimize_guided_model(fake_data[0], fake_data[1], 
+                                                          fake_data[2], fake_data[3])
+                        else:
+                            optimize_guided_model()
+                        #print(f"\nbd training: {time.time()-s1}")
+                    else:
+                        g_stop_training = True
+                        #print("bd boy did it")
+                    break
+
+
+
+        # Update the target network, copying all weights and biases in DQN
+        if i_episode % TARGET_UPDATE == 0:
+            #target_net.load_state_dict(policy_net.state_dict())
+            g_target_net.load_state_dict(g_policy_net.state_dict())
+        #if stop_training == True:
+        #    count_final += 1
+            
+        if g_stop_training == True:
+            g_count_final += 1
+            if (g_count_final >= 100):
+                break
+
+    print('Complete')
+    #stop_training = False
+    g_stop_training = False
+    #episodes_trajectories.append(episode_durations)
+    g_episodes_trajectories.append(g_episode_durations)
+
+
+
+
+
+
+# again for the both data model
+best = []
+for et in g_episodes_trajectories:
+    best.append(et)
+    
+
+maximum = 0
+for i in range(len(best)):
+    maximum = max(len(best[i]), maximum)
+    
+# Fill the episodes to make them the same length
+for i in range(len(best)):
+    length = len(best[i])
+    for j in range(maximum - len(best[i])):
+        best[i].append(best[i][j+length-100])
+    best[i] = np.asarray(best[i])
+    
+best = np.asarray(best)
+
+
+# To numpy
+g_score_mean = np.zeros(maximum)
+g_score_std = np.zeros(maximum)
+g_last100_mean = np.zeros(maximum)
+print(best[:, max(0, -99):1].mean())
+for i in range(maximum):
+    g_score_mean[i]  = best[:, i].mean()
+    g_score_std[i] = best[:, i].std()
+    g_last100_mean[i] = best[:, max(0, i-50):min(maximum, i+50)].mean()
+print(len(g_last100_mean))
+t = np.arange(0, maximum, 1)
+
+
+
+ax.fill_between(t, np.maximum(g_score_mean - g_score_std, 0),
+                np.minimum(g_score_mean + g_score_std, END_SCORE), color='r', alpha=0.2)
+
+ax.plot(t, g_score_mean, label='Proposed')
+
+
+
 ax.legend()
-fig.savefig('score_bd.png')
+fig.savefig('score_all.png')
+
+
 
