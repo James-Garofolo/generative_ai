@@ -380,12 +380,15 @@ def g_select_action(state, stop_training):
             # second column on max result is index of where max element was
             # found, so we pick action with the larger expected reward.
             
-            return g_policy_net(state).max(1)[1].view(1, 1)
+            act = g_policy_net(state).max(1)[1].view(1, 1)
+            #print(f"exploit {act}")
+            return act
     else:
-        possible_actions = torch.arange(n_actions).view(-1,1)
+        possible_actions = torch.arange(n_actions).view(-1,1).to(device)
         _, scr_sigma, _, sv_sigma = env_net(state.repeat(n_actions,1,1,1), possible_actions)
         tot_sig = scr_sigma.mean((1,2,3)) + sv_sigma.mean(1) # dimensions that aren't the batch id
-        return possible_actions[torch.argmax(tot_sig)]
+        #print(f"explore {possible_actions[torch.argmax(tot_sig)]}")
+        return possible_actions[torch.argmax(tot_sig)].view(1,1)
 
 
     
@@ -808,7 +811,7 @@ def optimize_env_model(guided=False):
 episodes_trajectories = []
 episodes_after_stop = 100
 
-runs = 1
+runs = 3
 
 # MAIN LOOP
 stop_training = False
@@ -1260,7 +1263,7 @@ print(len(g_last100_mean))
 t = np.arange(0, maximum, 1)
 
 
-
+fig, ax = plt.subplots(figsize=(16, 8))
 ax.fill_between(t, np.maximum(g_score_mean - g_score_std, 0),
                 np.minimum(g_score_mean + g_score_std, END_SCORE), color='r', alpha=0.2)
 
