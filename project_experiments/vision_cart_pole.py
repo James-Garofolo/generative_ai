@@ -813,10 +813,25 @@ episodes_after_stop = 100
 
 runs = 3
 
+
+folder = 'project_episode_durations'
+last_run = 0
+filenames = os.listdir(folder)
+
+for a in range(runs):
+    if f"regular{a}.csv" in filenames:
+        last_run = a+1
+        file_path = os.path.join(folder, f"regular{a}.csv")
+        episodes_trajectories.append(np.loadtxt(file_path, delimiter=',').tolist())
+
+
+    
+
 # MAIN LOOP
 stop_training = False
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~real~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-for j in range(runs):
+for j in range(last_run, runs):
+    print(j)
     mean_last = deque([0] * LAST_EPISODES_NUM, LAST_EPISODES_NUM)
     policy_net = DQN(screen_height, screen_width, n_actions).to(device)
     target_net = DQN(screen_height, screen_width, n_actions).to(device)
@@ -905,6 +920,8 @@ for j in range(runs):
     stop_training = False
     #bd_stop_training = False
     episodes_trajectories.append(episode_durations)
+    episode_durations = np.array(episode_durations)
+    np.savetxt(f"project_episode_durations/regular{i_episode}.csv", episode_durations, delimiter=',')
     #bd_episodes_trajectories.append(bd_episode_durations)
 
 # Cherry picking best runs
@@ -951,13 +968,17 @@ ax.set_ylabel('Score')
 ax.plot(t, score_mean, label='Real Data Only')
 #ax.plot(t, last100_mean, color='purple', linestyle='dotted', label='Smoothed mean')
 
-
-del(t, last100_mean, best, score_mean, score_std, stop_training, episodes_trajectories, episode_durations, memory, target_net, policy_net, optimizer, mean_last)
+try:
+    del(t, last100_mean, best, score_mean, score_std, stop_training, episodes_trajectories, episode_durations, memory, 
+        target_net, policy_net, optimizer, mean_last)
+except:
+    pass
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~both data types~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 bd_episodes_trajectories = []
 bd_stop_training = False
 for j in range(runs):
+    print("bd",j)
     env_net = D_AutoEncoder(screen_height, screen_width, latent_dims, n_actions, action_latents).to(device)
     bd_mean_last = deque([0] * LAST_EPISODES_NUM, LAST_EPISODES_NUM)
     bd_policy_net = DQN(screen_height, screen_width, n_actions).to(device)
@@ -1064,6 +1085,8 @@ for j in range(runs):
     bd_stop_training = False
     #episodes_trajectories.append(episode_durations)
     bd_episodes_trajectories.append(bd_episode_durations)
+    bd_episode_durations = np.array(bd_episode_durations)
+    np.savetxt(f"project_episode_durations/bd{i_episode}.csv", bd_episode_durations, delimiter=',')
 
 
 
@@ -1224,6 +1247,8 @@ for j in range(runs):
     g_stop_training = False
     #episodes_trajectories.append(episode_durations)
     g_episodes_trajectories.append(g_episode_durations)
+    g_episode_durations = np.array(g_episode_durations)
+    np.savetxt(f"project_episode_durations/g{i_episode}.csv", g_episode_durations, delimiter=',')
 
 
 
