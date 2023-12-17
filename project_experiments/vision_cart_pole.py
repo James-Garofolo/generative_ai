@@ -921,7 +921,7 @@ for j in range(last_run, runs):
     #bd_stop_training = False
     episodes_trajectories.append(episode_durations)
     episode_durations = np.array(episode_durations)
-    np.savetxt(f"project_episode_durations/regular{i_episode}.csv", episode_durations, delimiter=',')
+    np.savetxt(f"project_episode_durations/regular{j}.csv", episode_durations, delimiter=',')
     #bd_episodes_trajectories.append(bd_episode_durations)
 
 # Cherry picking best runs
@@ -976,6 +976,16 @@ except:
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~both data types~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 bd_episodes_trajectories = []
+
+
+last_run = 0
+
+for a in range(runs):
+    if f"bd{a}.csv" in filenames:
+        last_run = a+1
+        file_path = os.path.join(folder, f"bd{a}.csv")
+        bd_episodes_trajectories.append(np.loadtxt(file_path, delimiter=',').tolist())
+
 bd_stop_training = False
 for j in range(runs):
     print("bd",j)
@@ -1135,12 +1145,21 @@ ax.plot(t, bd_score_mean, label='Real and Fake')
 
 
 
-
-del(t, bd_last100_mean, best, bd_score_mean, bd_score_std, bd_stop_training, bd_episodes_trajectories, bd_episode_durations, bd_memory, 
-    bd_target_net, bd_policy_net, bd_optim, bd_mean_last, env_memory)
+try:
+    del(t, bd_last100_mean, best, bd_score_mean, bd_score_std, bd_stop_training, bd_episodes_trajectories, bd_episode_durations, bd_memory, 
+        bd_target_net, bd_policy_net, bd_optim, bd_mean_last, env_memory)
+except:
+    pass
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~myyyyyyyyyyyyy wayyyyyyyyyyyyyyy~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 g_episodes_trajectories = []
+
+for a in range(runs):
+    if f"g{a}.csv" in filenames:
+        last_run = a+1
+        file_path = os.path.join(folder, f"g{a}.csv")
+        g_episodes_trajectories.append(np.loadtxt(file_path, delimiter=',').tolist())
+
 g_stop_training = False
 for j in range(runs):
     env_net = D_AutoEncoder(screen_height, screen_width, latent_dims, n_actions, action_latents).to(device)
