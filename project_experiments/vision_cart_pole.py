@@ -958,15 +958,16 @@ t = np.arange(0, maximum, 1)
 # from scipy.interpolate import make_interp_spline # make smooth version
 # interpol = make_interp_spline(t, score_mean, k=3)  # type: BSpline
 
-fig, ax = plt.subplots(figsize=(16, 8))
-ax.fill_between(t, np.maximum(score_mean - score_std, 0),
-                np.minimum(score_mean + score_std, END_SCORE), color='b', alpha=0.2)
+fig, ax = plt.subplots(3, figsize=(16, 8))
+ax[0].fill_between(t, np.maximum(score_mean - score_std, 0),
+                np.minimum(score_mean + score_std, END_SCORE), color='b', alpha=0.2, label='Real Data Variance')
 # ax.legend(loc='upper right')
-ax.set_xlabel('Episode')
-ax.set_ylabel('Score')
+"""ax[0].set_xlabel('Episode')
+ax[0].set_ylabel('Score')"""
 # ax.set_title('Inverted Pendulum Training Plot from Pixels')
-ax.plot(t, score_mean, label='Real Data Only')
+ax[0].plot(t, score_mean, color='b', label='Real Data Only')
 #ax.plot(t, last100_mean, color='purple', linestyle='dotted', label='Smoothed mean')
+ax[0].legend()
 
 try:
     del(t, last100_mean, best, score_mean, score_std, stop_training, episodes_trajectories, episode_durations, memory, 
@@ -987,7 +988,7 @@ for a in range(runs):
         bd_episodes_trajectories.append(np.loadtxt(file_path, delimiter=',').tolist())
 
 bd_stop_training = False
-for j in range(runs):
+for j in range(last_run,runs):
     print("bd",j)
     env_net = D_AutoEncoder(screen_height, screen_width, latent_dims, n_actions, action_latents).to(device)
     bd_mean_last = deque([0] * LAST_EPISODES_NUM, LAST_EPISODES_NUM)
@@ -1096,7 +1097,7 @@ for j in range(runs):
     #episodes_trajectories.append(episode_durations)
     bd_episodes_trajectories.append(bd_episode_durations)
     bd_episode_durations = np.array(bd_episode_durations)
-    np.savetxt(f"project_episode_durations/bd{i_episode}.csv", bd_episode_durations, delimiter=',')
+    np.savetxt(f"project_episode_durations/bd{j}.csv", bd_episode_durations, delimiter=',')
 
 
 
@@ -1137,10 +1138,11 @@ t = np.arange(0, maximum, 1)
 
 
 
-ax.fill_between(t, np.maximum(bd_score_mean - bd_score_std, 0),
-                np.minimum(bd_score_mean + bd_score_std, END_SCORE), color='g', alpha=0.2)
+ax[1].fill_between(t, np.maximum(bd_score_mean - bd_score_std, 0),
+                np.minimum(bd_score_mean + bd_score_std, END_SCORE), color='g', alpha=0.2, label='Real and Fake Variance')
 
-ax.plot(t, bd_score_mean, label='Real and Fake')
+ax[1].plot(t, bd_score_mean, color='g', label='Real and Fake')
+ax[1].legend()
 
 
 
@@ -1153,7 +1155,7 @@ except:
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~myyyyyyyyyyyyy wayyyyyyyyyyyyyyy~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 g_episodes_trajectories = []
-
+last_run = 0
 for a in range(runs):
     if f"g{a}.csv" in filenames:
         last_run = a+1
@@ -1161,7 +1163,8 @@ for a in range(runs):
         g_episodes_trajectories.append(np.loadtxt(file_path, delimiter=',').tolist())
 
 g_stop_training = False
-for j in range(runs):
+for j in range(last_run,runs):
+    print("g",j)
     env_net = D_AutoEncoder(screen_height, screen_width, latent_dims, n_actions, action_latents).to(device)
     g_mean_last = deque([0] * LAST_EPISODES_NUM, LAST_EPISODES_NUM)
     g_policy_net = DQN(screen_height, screen_width, n_actions).to(device)
@@ -1267,7 +1270,7 @@ for j in range(runs):
     #episodes_trajectories.append(episode_durations)
     g_episodes_trajectories.append(g_episode_durations)
     g_episode_durations = np.array(g_episode_durations)
-    np.savetxt(f"project_episode_durations/g{i_episode}.csv", g_episode_durations, delimiter=',')
+    np.savetxt(f"project_episode_durations/g{j}.csv", g_episode_durations, delimiter=',')
 
 
 
@@ -1307,15 +1310,19 @@ print(len(g_last100_mean))
 t = np.arange(0, maximum, 1)
 
 
-fig, ax = plt.subplots(figsize=(16, 8))
-ax.fill_between(t, np.maximum(g_score_mean - g_score_std, 0),
-                np.minimum(g_score_mean + g_score_std, END_SCORE), color='r', alpha=0.2)
-
-ax.plot(t, g_score_mean, label='Proposed')
+#fig, ax = plt.subplots(figsize=(16, 8))
 
 
+ax[2].fill_between(t, np.maximum(g_score_mean - g_score_std, 0),
+                np.minimum(g_score_mean + g_score_std, END_SCORE), color='r', alpha=0.2, label='Proposed Variance')
 
-ax.legend()
+ax[2].plot(t, g_score_mean, color='r', label='Proposed')
+
+
+
+ax[2].legend()
+fig.text(0.5, 0.04, 'Number of Games', ha='center')
+fig.text(0.04, 0.5, 'Number of Steps Survived', va='center', rotation='vertical')
 fig.savefig('score_all.png')
 
 
