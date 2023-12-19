@@ -958,7 +958,7 @@ t = np.arange(0, maximum, 1)
 # from scipy.interpolate import make_interp_spline # make smooth version
 # interpol = make_interp_spline(t, score_mean, k=3)  # type: BSpline
 
-fig, ax = plt.subplots(3, figsize=(16, 8))
+fig, ax = plt.subplots(3, figsize=(8, 6))
 ax[0].fill_between(t, np.maximum(score_mean - score_std, 0),
                 np.minimum(score_mean + score_std, END_SCORE), color='b', alpha=0.2, label='Real Data Variance')
 # ax.legend(loc='upper right')
